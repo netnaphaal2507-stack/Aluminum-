@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATOM HUNTERS: ภารกิจพิชิตรหัสสาร</title>
+<style>
+:root{--bg0:#05061a;--neon:#27e1ff;--neon2:#b25cff;--ok:#2cff9a;--bad:#ff4d7d;--warn:#ffd166;--txt:#e8f1ff;--mut:#9fb3d9;--card:rgba(14,20,66,.78);--bd:rgba(39,225,255,.35)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:'Sarabun','Noto Sans Thai','Leelawadee UI','Tahoma',system-ui,sans-serif;color:var(--txt);background:var(--bg0);min-height:100vh;font-size:17px;line-height:1.6}
+.bg{position:fixed;inset:0;z-index:-1;background:radial-gradient(60% 50% at 12% 8%,rgba(178,92,255,.38),transparent 60%),radial-gradient(50% 50% at 92% 18%,rgba(39,225,255,.22),transparent 60%),linear-gradient(160deg,#04051a,#0b1040 55%,#1a0a3d)}
+.bg::after{content:"";position:absolute;inset:0;opacity:.55;background-image:radial-gradient(1.2px 1.2px at 20px 30px,#fff,transparent),radial-gradient(1px 1px at 90px 120px,#9fe9ff,transparent),radial-gradient(1.4px 1.4px at 160px 60px,#fff,transparent),radial-gradient(1px 1px at 60px 190px,#d9b8ff,transparent);background-size:200px 220px}
+.wrap{max-width:1080px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:18px;box-shadow:0 0 24px rgba(39,225,255,.08);margin-bottom:14px}
+h1,h2,h3{line-height:1.25;margin:.2em 0 .45em}
+h1{font-size:clamp(1.8rem,5vw,3rem)}
+h2{font-size:clamp(1.25rem,3.2vw,1.7rem)}
+h3{font-size:1.1rem}
+.neon{color:var(--neon);text-shadow:0 0 14px rgba(39,225,255,.7)}
+.mut{color:var(--mut)}
+small{color:var(--mut)}
+.btn{font:inherit;font-weight:700;min-height:48px;padding:10px 20px;border-radius:14px;border:1px solid var(--bd);background:rgba(39,225,255,.1);color:var(--txt);cursor:pointer;transition:transform .12s,box-shadow .2s}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 16px rgba(39,225,255,.4)}
+.btn.primary{background:linear-gradient(135deg,#19c8ff,#8a4bff);border-color:transparent;color:#04061c;box-shadow:0 0 18px rgba(39,225,255,.4)}
+.btn.warn{border-color:var(--warn);color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.big{font-size:1.2rem;padding:14px 30px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,.opt:focus-within{outline:3px solid var(--warn);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.center{text-align:center}
+/* HUD */
+.hud{position:sticky;top:0;z-index:20;background:rgba(5,6,26,.92);border-bottom:1px solid var(--bd);padding:8px 14px;backdrop-filter:blur(6px)}
+.hud-top{max-width:1080px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:800;color:var(--neon);letter-spacing:.5px;margin-right:auto}
+.stat{display:flex;align-items:baseline;gap:6px;background:rgba(39,225,255,.08);border:1px solid var(--bd);border-radius:12px;padding:2px 12px}
+.stat .lbl{font-size:.8rem;color:var(--mut)}
+.stat b{font-size:1.25rem;font-variant-numeric:tabular-nums}
+.stat.warn b{color:var(--warn)}
+.stat.danger b{color:var(--bad);animation:pulse 1s infinite}
+.icon{font:inherit;min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--bd);background:rgba(39,225,255,.08);color:var(--txt);cursor:pointer;font-size:1.1rem}
+.steps{max-width:1080px;margin:6px auto 0;display:flex;gap:6px;flex-wrap:wrap}
+.st{font-size:.85rem;padding:2px 10px;border-radius:99px;border:1px solid var(--bd);color:var(--mut)}
+.st.on{color:#04061c;background:var(--neon);border-color:var(--neon);font-weight:700}
+.st.done{color:var(--ok);border-color:var(--ok)}
+.bar{max-width:1080px;margin:6px auto 0;height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--neon),var(--neon2));transition:width .5s}
+.bar-label{max-width:1080px;margin:2px auto 0;font-size:.82rem;color:var(--mut)}
+/* start */
+.atom{position:relative;width:130px;height:130px;margin:6px auto}
+.atom .nuc{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--neon) 40%,var(--neon2));box-shadow:0 0 20px var(--neon)}
+.atom .orb{position:absolute;inset:0;border:2px solid rgba(39,225,255,.65);border-radius:50%;animation:orbit 7s linear infinite}
+.atom .orb::after{content:"";position:absolute;left:-6px;top:50%;margin-top:-6px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 0 12px var(--neon)}
+.atom .o1{--r:0deg}.atom .o2{--r:60deg;animation-duration:9s}.atom .o3{--r:120deg;animation-duration:11s}
+@keyframes orbit{from{transform:rotate(var(--r)) scaleY(.36)}to{transform:rotate(calc(var(--r) + 360deg)) scaleY(.36)}}
+@keyframes pulse{50%{opacity:.5}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.craft{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.craft div{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;font-size:.95rem}
+.craft b{color:var(--neon);font-size:1.15rem;margin-right:4px}
+input[type=text],textarea,select{font:inherit;width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--bd);background:rgba(3,5,30,.7);color:var(--txt)}
+textarea{min-height:96px;resize:vertical}
+label.fld{display:block;margin-bottom:8px;font-weight:600}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;vertical-align:top}
+th{color:var(--neon)}
+ul.tight{margin:.3em 0;padding-left:1.2em}
+.err{color:var(--bad);font-weight:600}
+/* mission */
+.badge{display:inline-block;font-size:.85rem;padding:2px 12px;border-radius:99px;background:rgba(178,92,255,.25);border:1px solid var(--neon2);margin-bottom:6px}
+.scenario{color:var(--mut);margin:.2em 0 .8em}
+.ev{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-bottom:12px}
+.panel{background:rgba(3,5,30,.55);border:1px solid rgba(39,225,255,.25);border-radius:14px;padding:10px}
+.scene{width:100%;height:auto;display:block;border-radius:10px;background:radial-gradient(circle at 50% 40%,rgba(39,225,255,.1),rgba(3,5,30,.9));border:1px solid rgba(39,225,255,.25)}
+.bond{stroke:#bfe6ff;stroke-width:3;stroke-linecap:round}
+.sym{fill:#0a0f2e;font-weight:800;text-anchor:middle;font-family:Tahoma,sans-serif}
+.bob{animation:bob 3.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.88rem;margin-top:6px}
+.lg i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.formula{font-size:clamp(2.2rem,8vw,3.4rem);font-weight:800;text-align:center;color:var(--neon);text-shadow:0 0 16px rgba(39,225,255,.7);padding:6px 0;letter-spacing:2px}
+.formula.hid{color:var(--mut);text-shadow:none;font-size:1.3rem;letter-spacing:0}
+.evc{margin-top:8px;padding:8px 12px;border-left:4px solid var(--neon2);background:rgba(255,255,255,.04);border-radius:8px}
+.evc b{display:block}
+.discuss{margin:10px 0;padding:10px 14px;border-radius:12px;background:rgba(255,209,102,.1);border:1px dashed var(--warn)}
+.flow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;font-size:.85rem}
+.flow span{padding:2px 10px;border-radius:99px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15)}
+.roles{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.role{font-size:.85rem;padding:4px 10px;border-radius:12px;background:rgba(178,92,255,.16);border:1px solid rgba(178,92,255,.5)}
+fieldset{border:1px solid rgba(39,225,255,.25);border-radius:14px;margin:0 0 12px;padding:10px 12px}
+legend{font-weight:700;color:var(--neon);padding:0 6px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.opt{position:relative;display:block;cursor:pointer}
+.opt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.opt .ob{display:block;min-height:56px;padding:10px 14px;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);transition:.15s}
+.opt .ob small{display:block}
+.opt.sel .ob{border-color:var(--neon);background:rgba(39,225,255,.14);box-shadow:0 0 14px rgba(39,225,255,.35)}
+.opt.correct .ob{border-color:var(--ok);background:rgba(44,255,154,.14)}
+.opt.wrong .ob{border-color:var(--bad);background:rgba(255,77,125,.14)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chip{font:inherit;font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid var(--neon2);background:rgba(178,92,255,.16);color:var(--txt);cursor:pointer;min-height:36px}
+.hints{margin:10px 0}
+.hint-box{margin-top:8px;padding:8px 12px;border-radius:10px;background:rgba(255,209,102,.1);border-left:4px solid var(--warn)}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:10px 0;cursor:pointer}
+.chk input{width:24px;height:24px;margin-top:3px;flex:none}
+.msg{min-height:1.4em;margin:6px 0}
+.fb{border-radius:16px;padding:14px;border:2px solid var(--bd);margin-top:14px;background:rgba(3,5,30,.5)}
+.fb.good{border-color:var(--ok)}.fb.part{border-color:var(--warn)}.fb.bad{border-color:var(--bad)}
+.ok{color:var(--ok)}.no{color:var(--bad)}
+.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.flash{animation:flash .8s}
+@keyframes flash{30%{box-shadow:0 0 36px var(--ok)}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+#fx .p{position:absolute;width:10px;height:10px;border-radius:50%;animation:fly 1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy));opacity:0}}
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(3,4,20,.94);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:20px}
+.stars{font-size:2.4rem;letter-spacing:6px}
+.ri{border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,.03);break-inside:avoid}
+.ri.na{opacity:.7}
+.big-score{font-size:clamp(2.2rem,8vw,3.6rem);font-weight:800;color:var(--neon)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.kv div{background:rgba(255,255,255,.05);border-radius:12px;padding:10px;text-align:center}
+.kv b{display:block;font-size:1.5rem;color:var(--neon)}
+@media(max-width:820px){.ev,.grid2,.modes{grid-template-columns:1fr}.grid3{grid-template-columns:1fr}.card{padding:14px}body{font-size:16px}.brand{width:100%}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{
+ body{background:#fff;color:#000}.bg,#hud,.noprint,#fx{display:none!important}
+ .card,.ri{background:#fff!important;color:#000;border:1px solid #888;box-shadow:none}
+ .mut,small,th,.big-score,.kv b,.neon{color:#000!important;text-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div id="fx" aria-hidden="true"></div>
+
+<header id="hud" class="hud" hidden>
+ <div class="hud-top">
+  <div class="brand">⚛ ATOM HUNTERS</div>
+  <div class="stat"><span class="lbl">XP</span><b id="hudXp">0</b></div>
+  <div class="stat" id="timeBox"><span class="lbl">เวลา</span><b id="hudTime">50:00</b></div>
+  <button class="icon" id="btnSound" aria-pressed="false" title="เปิด/ปิดเสียง" aria-label="เปิดหรือปิดเสียง">🔇</button>
+  <button class="icon" id="btnPause" title="หยุดเวลา" aria-label="หยุดเวลาชั่วคราว">⏸</button>
+  <button class="icon" id="btnHome" title="เริ่มเกมใหม่" aria-label="เริ่มเกมใหม่">↺</button>
+ </div>
+ <div class="steps" id="hudSteps"></div>
+ <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="hudBarWrap"><i id="hudBar"></i></div>
+ <div class="bar-label" id="hudBarLbl"></div>
+</header>
+
+<main class="wrap">
+<noscript><div class="card">เกมนี้ต้องเปิดใช้งาน JavaScript</div></noscript>
+
+<!-- START -->
+<section id="s-start">
+ <div class="card center">
+  <div class="atom" aria-hidden="true"><i class="nuc"></i><b class="orb o1"></b><b class="orb o2"></b><b class="orb o3"></b></div>
+  <h1 class="neon" tabindex="-1">ATOM HUNTERS</h1>
+  <h2>ภารกิจพิชิตรหัสสาร</h2>
+  <p class="mut">เกมการเรียนรู้เชิงรุก วิทยาศาสตร์กายภาพ 1 ชั้น ม.5 · เรื่อง การจำแนกธาตุและสารประกอบ · อะตอมและโมเลกุล</p>
+  <p style="max-width:720px;margin:.5em auto">ฐานข้อมูลสารเคมีของ <b>ศูนย์วิทยาศาสตร์แห่งอนาคต</b> เกิดความผิดปกติ สูตรเคมีและภาพอนุภาคหายไปบางส่วน ทีม ATOM HUNTERS ต้องวิเคราะห์หลักฐาน อธิบายเหตุผล กู้คืนข้อมูล และปลดล็อกห้องทดลองปริศนาให้ครบ 4 ด่านภายใน <b>50 นาที</b></p>
+ </div>
+
+ <div class="grid2">
+  <div class="card">
+   <h2>🎮 ตั้งค่าการเล่น</h2>
+   <div class="modes" role="radiogroup" aria-label="รูปแบบการเล่น">
+    <label class="opt sel"><input type="radio" name="mode" value="solo" checked><span class="ob"><b>👤 เล่นเดี่ยว</b><small>เรียนรู้รายบุคคล</small></span></label>
+    <label class="opt"><input type="radio" name="mode" value="team"><span class="ob"><b>👥 เล่นเป็นทีม (4–5 คน)</b><small>หมุนเวียนบทบาททุกภารกิจ</small></span></label>
+   </div>
+   <div id="soloBox" style="margin-top:12px">
+    <label class="fld" for="soloName">ชื่อผู้เล่น</label>
+    <input type="text" id="soloName" maxlength="40" placeholder="เช่น สมชาย">
+   </div>
+   <div id="teamBox" style="margin-top:12px" hidden>
+    <label class="fld" for="teamName">ชื่อทีม</label>
+    <input type="text" id="teamName" maxlength="40" placeholder="เช่น ทีมนิวตรอน">
+    <p class="mut" style="margin:10px 0 4px">ชื่อสมาชิก (ต้องมี 4–5 คน)</p>
+    <div class="grid2">
+     <input type="text" class="mem" maxlength="30" aria-label="สมาชิกคนที่ 1" placeholder="สมาชิก 1">
+     <input type="text" class="mem" maxlength="30" aria-label="สมาชิกคนที่ 2" placeholder="สมาชิก 2">
+     <input type="text" class="mem" maxlength="30" aria-label="สมาชิกคนที่ 3" placeholder="สมาชิก 3">
+     <input type="text" class="mem" maxlength="30" aria-label="สมาชิกคนที่ 4" placeholder="สมาชิก 4">
+     <input type="text" class="mem" maxlength="30" aria-label="สมาชิกคนที่ 5 (ไม่บังคับ)" placeholder="สมาชิก 5 (ไม่บังคับ)">
+    </div>
+   </div>
+   <div id="startMsg" class="msg err" role="alert"></div>
+   <button class="btn primary big" id="btnStart">▶ เริ่มภารกิจ</button>
+  </div>
+  <div class="card">
+   <h2>🏆 กระดานคะแนน (เครื่องนี้)</h2>
+   <div id="boardStart"></div>
+   <button class="btn warn" id="btnClearBoard" style="margin-top:8px;min-height:40px">ล้างกระดานคะแนน</button>
+   <p><small>เก็บในเบราว์เซอร์ของเครื่องนี้เท่านั้น ไม่ส่งข้อมูลออกภายนอก</small></p>
+  </div>
+ </div>
+
+ <div class="card">
+  <h2>🧭 กรอบการออกแบบ CRAFT</h2>
+  <div class="craft">
+   <div><b>C</b>Context — ระบบฐานข้อมูลสารเคมีล่ม ต้องวิเคราะห์สูตรและแบบจำลองอนุภาคเพื่อกู้ข้อมูล</div>
+   <div><b>R</b>Role — นักวิเคราะห์สูตรเคมี · นักอ่านแบบจำลองอนุภาค · นักตรวจสอบหลักฐาน · ผู้รายงานผล (หมุนเวียนทุกภารกิจ)</div>
+   <div><b>A</b>Action — สังเกต วิเคราะห์ จำแนก อภิปราย แก้ไขความเข้าใจ และไขปริศนา</div>
+   <div><b>F</b>Format — 4 ด่าน XP จับเวลา คำใบ้ แบบจำลองอนุภาค กระดานคะแนน สรุปผล</div>
+   <div><b>T</b>Terms — 50 นาที · ทุกคำตอบต้องมีเหตุผลจากหลักฐาน · คะแนนชัดเจน</div>
+  </div>
+ </div>
+
+ <div class="card">
+  <h2>📜 กติกาและเกณฑ์การให้คะแนน</h2>
+  <ul class="tight">
+   <li><b>4 ด่าน 15 ภารกิจ:</b> 1) ATOM SCANNER (4) · 2) ELEMENT OR COMPOUND? (5) · 3) MYSTERY LAB (3) · 4) FINAL BOSS (3)</li>
+   <li><b>ทุกภารกิจตอบ 2 มิติ:</b> (1) ธาตุ หรือ สารประกอบ และ (2) อะตอม หรือ โมเลกุล (ด่าน 4 มีตัวเลือก “ไอออน/หน่วยสูตร” เพิ่ม)</li>
+   <li><b>ขั้นตอนทุกภารกิจ:</b> คิดเดี่ยว → อภิปรายก่อนส่ง → เขียนเหตุผล (ข้อสรุป–หลักฐาน–หลักการ) → ส่งคำตอบ (ส่งได้ครั้งเดียว) → ดูเฉลย</li>
+   <li><b>เฉลยจะไม่แสดงก่อนส่งคำตอบ</b> ยกเว้นเปิดคำใบ้ (3 ระดับ: สังเกตหลักฐาน → เชื่อมหลักการ → แนวทางวิเคราะห์)</li>
+  </ul>
+  <div style="overflow-x:auto"><table>
+   <tr><th>รายการ</th><th>คะแนน</th><th>ผู้ประเมิน</th></tr>
+   <tr><td>จำแนกธาตุ/สารประกอบถูกต้อง</td><td>50</td><td>ระบบอัตโนมัติ</td></tr>
+   <tr><td>จำแนกอะตอม/โมเลกุลถูกต้อง</td><td>50</td><td>ระบบอัตโนมัติ</td></tr>
+   <tr><td>คำถามย่อย: นับชนิดธาตุ (ด่าน 2) / เลือกสูตร (ด่าน 3) — นับเป็นการใช้สูตรและสัญลักษณ์</td><td>10</td><td>ระบบอัตโนมัติ</td></tr>
+   <tr><td>ตรวจพบข้อผิดพลาดของข้อความนักเรียน (ด่าน 4 โบนัส)</td><td>15</td><td>ระบบอัตโนมัติ</td></tr>
+   <tr><td>การอธิบายเหตุผลจากหลักฐาน</td><td>สูงสุด 20</td><td>ครู/เพื่อนในทีม (รูบริค)</td></tr>
+   <tr><td>การใช้สูตรเคมีและสัญลักษณ์ถูกต้อง (ภารกิจที่ไม่มีคำถามย่อย)</td><td>สูงสุด 10</td><td>ครู/เพื่อนในทีม (รูบริค)</td></tr>
+   <tr><td>การโต้แย้งและแก้ไขความเข้าใจคลาดเคลื่อนอย่างมีเหตุผล</td><td>สูงสุด 20</td><td>ครู/เพื่อนในทีม (รูบริค)</td></tr>
+   <tr><td>ใช้คำใบ้ระดับ 1 / 2 / 3</td><td>หัก 3 / 5 / 8</td><td>ระบบอัตโนมัติ</td></tr>
+  </table></div>
+  <p><small>คุณภาพการอธิบายประเมินด้วยรูบริคตามเนื้อหาและการอ้างหลักฐาน ไม่ตัดสินจากความยาวข้อความ · ผ่านด่าน: ได้ ⭐ ตามความแม่นยำของคะแนนอัตโนมัติในด่านนั้น (≥85% = 3 ดาว, ≥60% = 2 ดาว, อื่น ๆ = 1 ดาว)</small></p>
+ </div>
+</section>
+
+<!-- LEVEL INTRO -->
+<section id="s-intro" hidden>
+ <div class="card center">
+  <div style="font-size:3rem" id="inIcon"></div>
+  <span class="badge" id="inBadge"></span>
+  <h1 class="neon" id="inTitle" tabindex="-1"></h1>
+  <h2 id="inSub"></h2>
+  <p id="inStory" style="max-width:720px;margin:.5em auto"></p>
+  <div style="text-align:left;max-width:720px;margin:auto" id="inHow"></div>
+  <p><small id="inTime"></small></p>
+  <button class="btn primary big" id="btnBegin">เริ่มด่านนี้ ▶</button>
+ </div>
+</section>
+
+<!-- MISSION -->
+<section id="s-mission" hidden>
+ <div class="card" id="missionCard"></div>
+</section>
+
+<!-- LEVEL CLEAR -->
+<section id="s-clear" hidden>
+ <div class="card center" id="clearCard"></div>
+</section>
+
+<!-- SUMMARY -->
+<section id="s-summary" hidden>
+ <div id="sumBox"></div>
+</section>
+</main>
+
+<div id="pauseOv" class="overlay" hidden>
+ <h2>⏸ หยุดเวลาชั่วคราว</h2>
+ <p class="mut">เนื้อหาภารกิจถูกซ่อนไว้ระหว่างหยุดเวลา</p>
+ <button class="btn primary big" id="btnResume">▶ เล่นต่อ</button>
+</div>
+
+<script>
+"use strict";
+/* ===================== helpers ===================== */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fHTML=s=>s.replace(/[₀-₉]+/g,m=>'<sub>'+Array.from(m).map(c=>c.charCodeAt(0)-8320).join('')+'</sub>').replace(/⁺/g,'<sup>+</sup>').replace(/⁻/g,'<sup>−</sup>');
+const rich=s=>fHTML(esc(s));
+const fmt=t=>String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ===================== data ===================== */
+const DURATION=50*60;
+const HINT_COST=[3,5,8];
+const EXTRA_PTS={count:10,formula:10,error:15};
+const KIND_L={element:'ธาตุ',compound:'สารประกอบ'};
+const PART_L={atom:'อะตอม',molecule:'โมเลกุล',ionic:'ไอออน/หน่วยสูตร (ไม่ใช่โมเลกุล)'};
+
+const EL={
+ H:{c:'#e6efff',r:9,n:'ไฮโดรเจน'},He:{c:'#ffd166',r:13,n:'ฮีเลียม'},C:{c:'#8d99ae',r:14,n:'คาร์บอน'},
+ N:{c:'#4f8bff',r:13,n:'ไนโตรเจน'},O:{c:'#ff4d6d',r:13,n:'ออกซิเจน'},Ne:{c:'#ff9f43',r:14,n:'นีออน'},
+ Cl:{c:'#3ddc84',r:16,n:'คลอรีน'},Ar:{c:'#b388ff',r:17,n:'อาร์กอน'},P:{c:'#ff8fd8',r:15,n:'ฟอสฟอรัส'},Na:{c:'#ffb347',r:12,n:'โซเดียม'}
+};
+/* a:[ธาตุ,x,y]  b:[i,j,อันดับพันธะ] */
+const SHAPES={
+ He:{a:[['He',0,0]],b:[]},Ne:{a:[['Ne',0,0]],b:[]},Ar:{a:[['Ar',0,0]],b:[]},
+ O2:{a:[['O',-15,0],['O',15,0]],b:[[0,1,2]]},
+ N2:{a:[['N',-14,0],['N',14,0]],b:[[0,1,3]]},
+ Cl2:{a:[['Cl',-18,0],['Cl',18,0]],b:[[0,1,1]]},
+ H2O:{a:[['O',0,-6],['H',-20,12],['H',20,12]],b:[[0,1,1],[0,2,1]]},
+ CO2:{a:[['O',-34,0],['C',0,0],['O',34,0]],b:[[0,1,2],[1,2,2]]},
+ CH4:{a:[['C',0,0],['H',-24,-20],['H',24,-20],['H',-24,20],['H',24,20]],b:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]},
+ NH3:{a:[['N',0,-6],['H',-24,12],['H',24,12],['H',0,30]],b:[[0,1,1],[0,2,1],[0,3,1]]},
+ O3:{a:[['O',-26,10],['O',0,-8],['O',26,10]],b:[[0,1,2],[1,2,1]]},
+ CO:{a:[['C',-14,0],['O',14,0]],b:[[0,1,3]]},
+ H2O2:{a:[['H',-40,14],['O',-14,-2],['O',14,-2],['H',40,14]],b:[[0,1,1],[1,2,1],[2,3,1]]},
+ P4:{a:[['P',0,-24],['P',-24,14],['P',24,14],['P',0,2]],b:[[0,1,1],[0,2,1],[1,2,1],[3,0,1],[3,1,1],[3,2,1]]},
+ NaCl:{lattice:true,a:[['Na',0,0],['Cl',0,0]],b:[]}
+};
+
+const ROLES=[
+ {n:'นักวิเคราะห์สูตรเคมี',ic:'🧮'},{n:'นักอ่านแบบจำลองอนุภาค',ic:'🔭'},
+ {n:'นักตรวจสอบหลักฐาน',ic:'🕵️'},{n:'ผู้รายงานผล',ic:'📣'},{n:'ผู้ท้าทายความคิด',ic:'⚡'}
+];
+
+const LEVELS=[
+ {n:'ATOM SCANNER',s:'เครื่องสแกนอนุภาค',ic:'🔬',min:10,
+  story:'ระบบสแกนของศูนย์วิทยาศาสตร์แห่งอนาคตยังทำงานได้บางส่วน มันแสดงภาพแบบจำลองอนุภาคของตัวอย่างลึกลับ แต่ป้ายสูตรเคมีหายไป ทีมต้องอ่านภาพให้ออกเพื่อกู้ข้อมูลชุดแรก',
+  how:['วงกลมแต่ละวง = 1 อะตอม สีเดียวกัน = ธาตุชนิดเดียวกัน','เส้นเชื่อม = อะตอมยึดกันเป็นกลุ่มเดียวกัน','ตอบ 2 มิติ: ธาตุ/สารประกอบ และ อะตอม/โมเลกุล พร้อมเขียนเหตุผลจากภาพ']},
+ {n:'ELEMENT OR COMPOUND?',s:'รหัสลับจำแนกสาร',ic:'🧬',min:12,
+  story:'ฐานข้อมูลกลางเหลือเพียงสูตรเคมีในรูปรหัส ภาพแบบจำลองถูกลบหมด ทีมต้องถอดรหัสสูตร นับชนิดของธาตุ และจำแนกสารให้ถูกต้อง',
+  how:['สัญลักษณ์ธาตุขึ้นต้นด้วยตัวพิมพ์ใหญ่ อาจตามด้วยตัวพิมพ์เล็ก (เช่น Cl เป็นธาตุเดียว)','เลขห้อยท้ายสัญลักษณ์ = จำนวนอะตอมของธาตุนั้นใน 1 อนุภาค','มีคำถามย่อยให้นับชนิดของธาตุในสูตร']},
+ {n:'MYSTERY LAB',s:'ห้องทดลองปริศนา',ic:'🧪',min:12,
+  story:'ประตูห้องทดลองปริศนาล็อกอยู่ ต้องระบุสารลึกลับ 3 ชนิดให้ได้จากหลักฐานหลายประเภม ทั้งภาพจำลองอนุภาค สมบัติของสาร และบันทึกการวิเคราะห์ธาตุ',
+  how:['อ่านหลักฐานทุกชิ้น แล้วเชื่อมโยงเข้าด้วยกัน — ไม่มีชิ้นใดตอบได้ด้วยตัวเอง','เลือกสูตรเคมีของสารให้ถูกต้อง พร้อมจำแนก 2 มิติ','มีคำใบ้ 3 ระดับ แต่ทุกระดับเสียคะแนน']},
+ {n:'FINAL BOSS',s:'ภารกิจตัดสิน',ic:'👾',min:12,
+  story:'บอสสุดท้ายคือสถานการณ์ใหม่ที่ไม่เคยฝึกมาก่อน พร้อมข้อความของ “นักเรียนสมมติ” ที่อาจมีข้อผิดพลาดทางวิทยาศาสตร์ ทีมต้องตัดสินใจ โต้แย้งอย่างสร้างสรรค์ และชี้ให้ได้ว่าผิดตรงไหน',
+  how:['ด่านนี้มีตัวเลือกที่ 3 ในมิติอนุภาค: “ไอออน/หน่วยสูตร” — เลือกเมื่อหลักฐานเข้าเงื่อนไขเท่านั้น','มีโบนัสตรวจพบข้อผิดพลาด +15 XP','ทีมที่โต้แย้งด้วยหลักฐานและแก้ความเข้าใจคลาดเคลื่อนได้จะได้คะแนนรูบริคเต็ม']}
+];
+LEVELS[2].story=LEVELS[2].story.replace('หลายประเภม','หลายประเภท');
+
+const hintSet=(a,b,c)=>[a,b,c];
+const QUESTIONS=[
+/* ---------- ด่าน 1 ---------- */
+{id:'q1',level:1,plain:'He',f:'He',th:'ฮีเลียม',title:'ตัวอย่าง A-01',
+ scenario:'เครื่องสแกนอนุภาคจับสัญญาณจากถังบรรจุก๊าซใบหนึ่ง ภาพแบบจำลองปรากฏบนจอ แต่ป้ายสูตรเคมีถูกลบหาย',
+ shape:'He',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'ทุกอนุภาคเป็นวงกลมเดี่ยว ๆ สีเดียวกัน ไม่มีเส้นเชื่อมกับอนุภาคอื่น'},
+     {ic:'🧪',t:'สมบัติที่บันทึกได้',x:'ก๊าซไม่มีสี ไม่มีกลิ่น เบากว่าอากาศ และแทบไม่ทำปฏิกิริยากับสารอื่นภายใต้สภาวะทั่วไป'}],
+ discuss:'ถ้าอนุภาคหนึ่งมีเพียง 1 อะตอมและไม่ต่อกับอะตอมอื่น จะเรียกว่า “โมเลกุล” ได้หรือไม่? ทีมเห็นพ้องกันไหม เพราะอะไร',
+ kind:'element',particle:'atom',
+ hints:hintSet('สังเกตภาพ: 1 อนุภาคมีกี่อะตอม มีเส้นเชื่อมหรือไม่ และมีสีต่างกันกี่สี','ธาตุประกอบด้วยอะตอมชนิดเดียวกัน ส่วนอนุภาคที่เป็นอะตอมเดี่ยวไม่มีพันธะกับอะตอมอื่น (เช่นก๊าซเฉื่อย)','ถามตัวเองสองข้อ: (1) ในภาพมีกี่สี (ชนิดของธาตุ)? (2) 1 อนุภาคมีกี่อะตอมที่ยึดกันอยู่? แล้วเทียบกับนิยามของแต่ละมิติ'),
+ explain:'He เป็น “ธาตุ” เพราะมีอะตอมชนิดเดียว (ฮีเลียม) และเป็น “อะตอม” เพราะแต่ละอนุภาคมี 1 อะตอม ไม่มีพันธะกับอะตอมอื่น ก๊าซเฉื่อยอย่าง He, Ne, Ar อยู่เป็นอะตอมเดี่ยวภายใต้สภาวะทั่วไป'},
+{id:'q2',level:1,plain:'O₂',f:'O₂',th:'ก๊าซออกซิเจน',title:'ตัวอย่าง A-02',
+ scenario:'ตัวอย่างถัดไปมาจากถังในห้องช่วยชีวิตของศูนย์วิทยาศาสตร์ สแกนได้ภาพแบบจำลองแต่ไม่มีป้ายสูตร',
+ shape:'O2',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'แต่ละอนุภาคมี 2 อะตอมสีเดียวกัน ยึดกันด้วยเส้นเชื่อม'},
+     {ic:'🧪',t:'สมบัติที่บันทึกได้',x:'ก๊าซที่จำเป็นต่อการหายใจและช่วยให้ไฟติด มีประมาณ 21% ของปริมาตรอากาศ'}],
+ discuss:'ในภาพมีอะตอมหลายอะตอมต่อกัน แปลว่าต้องเป็นสารประกอบหรือไม่? ทีมจะตรวจสอบจากอะไร',
+ kind:'element',particle:'molecule',
+ hints:hintSet('นับจำนวนอะตอมต่ออนุภาค และดูว่าอะตอมเหล่านั้นสีเดียวกันหรือไม่','โมเลกุลคือกลุ่มอะตอมตั้งแต่ 2 อะตอมที่ยึดกัน ส่วนธาตุ/สารประกอบดูที่ “ชนิดของธาตุ” ไม่ใช่จำนวนอะตอม','ถามว่า “อะตอมทั้งสองเป็นธาตุเดียวกันหรือไม่?” ถ้าเป็นธาตุเดียวกัน สารนั้นยังเป็นธาตุได้แม้เป็นโมเลกุล'),
+ explain:'O₂ เป็น “ธาตุ” เพราะประกอบด้วยอะตอมออกซิเจนเพียงชนิดเดียว และเป็น “โมเลกุล” เพราะ 1 อนุภาคมี 2 อะตอมยึดกัน ดังนั้นโมเลกุลทุกชนิดไม่ได้เป็นสารประกอบ — O₂ เป็นโมเลกุลของธาตุ'},
+{id:'q3',level:1,plain:'H₂O',f:'H₂O',th:'น้ำ',title:'ตัวอย่าง A-03',
+ scenario:'ถังตัวอย่างใบที่ 3 ถูกส่งมาจากห้องควบคุมความเย็น ภาพสแกนยังอ่านได้ชัดเจน',
+ shape:'H2O',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'แต่ละอนุภาคมี 3 อะตอม: อะตอมสีใหญ่ 1 อะตอม และอะตอมสีเล็กอีกสีหนึ่ง 2 อะตอม ต่อกันเป็นมุม'},
+     {ic:'🧪',t:'สมบัติที่บันทึกได้',x:'ของเหลวใส ไม่มีสี จุดเดือด 100 °C ที่ความดัน 1 atm'}],
+ discuss:'อะตอมต่างสีในอนุภาคเดียวกันบอกอะไรเกี่ยวกับชนิดของสาร? ทีมมีหลักฐานอะไรสนับสนุน',
+ kind:'compound',particle:'molecule',
+ hints:hintSet('นับจำนวน “สี” ที่ต่างกันในอนุภาคเดียว (1 สี = 1 ชนิดของธาตุ)','สารประกอบประกอบด้วยธาตุตั้งแต่ 2 ชนิดรวมกันเป็นอนุภาคเดียวกัน','เทียบกับตัวอย่าง A-02: อะไรต่างกัน? แล้วสรุปว่าอนุภาคนี้เป็นกลุ่มอะตอมหรืออะตอมเดี่ยว'),
+ explain:'H₂O เป็น “สารประกอบ” เพราะประกอบด้วยธาตุ 2 ชนิด (ไฮโดรเจนและออกซิเจน) และเป็น “โมเลกุล” เพราะ 1 อนุภาคมี 3 อะตอมยึดกัน (H 2 อะตอม, O 1 อะตอม)'},
+{id:'q4',level:1,plain:'Ne',f:'Ne',th:'นีออน',title:'ตัวอย่าง A-04',
+ scenario:'ตัวอย่างสุดท้ายของด่านนี้มาจากห้องป้ายไฟของศูนย์วิทยาศาสตร์ ภาพสแกนแสดงอนุภาคกระจายตัวในภาชนะ',
+ shape:'Ne',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'อนุภาคเป็นวงกลมเดี่ยวสีส้ม แต่ละอนุภาคแยกจากกัน ไม่มีเส้นเชื่อม'},
+     {ic:'🧪',t:'สมบัติที่บันทึกได้',x:'ก๊าซที่ทำให้หลอดป้ายไฟเรืองแสงสีแดงส้ม และไม่ทำปฏิกิริยากับสารอื่นแทบทุกชนิด'}],
+ discuss:'ตัวอย่างนี้ต่างจาก A-01 อย่างไร และเหมือนกันตรงไหน? ทีมใช้เกณฑ์เดียวกันได้หรือไม่',
+ kind:'element',particle:'atom',
+ hints:hintSet('เปรียบเทียบภาพนี้กับตัวอย่าง A-01 ว่ามีลักษณะใดเหมือนกัน','อนุภาคที่มี 1 อะตอมและไม่มีพันธะกับอะตอมอื่น เรียกว่าอะตอมเดี่ยว','ตรวจเกณฑ์สองข้อ: ชนิดของธาตุในภาพมีกี่ชนิด และ 1 อนุภาคมีกี่อะตอม'),
+ explain:'Ne เป็น “ธาตุ” (นีออนอย่างเดียว) และเป็น “อะตอม” เพราะแต่ละอนุภาคมี 1 อะตอมไม่มีพันธะ — เหมือน He ซึ่งเป็นก๊าซเฉื่อยเช่นกัน'},
+/* ---------- ด่าน 2 ---------- */
+{id:'q5',level:2,plain:'N₂',f:'N₂',th:'ก๊าซไนโตรเจน',title:'รหัสลับ B-01',
+ scenario:'ระบบเหลือเพียงสูตรเคมีของสาร ภาพแบบจำลองถูกลบ ทีมต้องถอดรหัสจากสูตรและข้อมูลที่บันทึกไว้',
+ shape:'N2',model:false,formula:true,
+ ev:[{ic:'🗂️',t:'ข้อมูลในระบบ',x:'สารหลักในอากาศ มีประมาณ 78% ของปริมาตร ก๊าซไม่มีสี ไม่มีกลิ่น'}],
+ discuss:'เลขห้อยท้ายสัญลักษณ์บอกอะไร และต่างจากการบอก “ชนิดของธาตุ” อย่างไร?',
+ extra:{type:'count',label:'ในสูตรนี้มีธาตุกี่ชนิด?',opts:[['1','1 ชนิด'],['2','2 ชนิด'],['3','3 ชนิด']],correct:'1'},
+ kind:'element',particle:'molecule',
+ hints:hintSet('อ่านสัญลักษณ์ธาตุในสูตร: มีสัญลักษณ์ที่แตกต่างกันกี่แบบ? เลขห้อยท้ายคือจำนวนอะตอม','เลขห้อยบอกจำนวนอะตอมของธาตุนั้นต่ออนุภาค ไม่ได้บอกชนิดธาตุ ให้นับ “ชนิด” ของสัญลักษณ์ที่ต่างกัน','ธาตุชนิดเดียว → ธาตุ; ตั้งแต่ 2 ชนิดขึ้นไป → สารประกอบ จากนั้นดูว่า 1 อนุภาคมีกี่อะตอม'),
+ explain:'N₂ มีสัญลักษณ์ธาตุเพียง N (ไนโตรเจน) ชนิดเดียว จึงเป็น “ธาตุ” และเลขห้อย 2 หมายถึงมี 2 อะตอมต่ออนุภาค จึงเป็น “โมเลกุล” — เป็นโมเลกุลของธาตุ ไม่ใช่สารประกอบ'},
+{id:'q6',level:2,plain:'CO₂',f:'CO₂',th:'คาร์บอนไดออกไซด์',title:'รหัสลับ B-02',
+ scenario:'รหัสถัดไปอยู่ในแฟ้มบันทึกห้องปฏิบัติการชีววิทยา มีเพียงสูตรและคำอธิบายสั้น ๆ',
+ shape:'CO2',model:false,formula:true,
+ ev:[{ic:'🗂️',t:'ข้อมูลในระบบ',x:'ก๊าซที่ได้จากการหายใจออกและการเผาไหม้ ทำให้น้ำปูนใสขุ่น'}],
+ discuss:'สัญลักษณ์ C และ O คือธาตุกี่ชนิด? แล้วจำนวนอะตอมรวมต่ออนุภาคเกี่ยวข้องกับการเป็นธาตุ/สารประกอบหรือไม่?',
+ extra:{type:'count',label:'ในสูตรนี้มีธาตุกี่ชนิด?',opts:[['1','1 ชนิด'],['2','2 ชนิด'],['3','3 ชนิด']],correct:'2'},
+ kind:'compound',particle:'molecule',
+ hints:hintSet('ดูสัญลักษณ์ที่ต่างกันในสูตร และเลขห้อยของแต่ละสัญลักษณ์','สารประกอบมีธาตุตั้งแต่ 2 ชนิดในอนุภาคเดียวกัน การมีหลายอะตอมอย่างเดียวไม่พอจะสรุปว่าเป็นสารประกอบ','นับชนิดของธาตุก่อน แล้วค่อยนับจำนวนอะตอมรวมใน 1 อนุภาคเพื่อตัดสินว่าเป็นอะตอมหรือโมเลกุล'),
+ explain:'CO₂ ประกอบด้วยธาตุ 2 ชนิด (C และ O) จึงเป็น “สารประกอบ” และ 1 อนุภาคมี 3 อะตอม (C 1 อะตอม, O 2 อะตอม) จึงเป็น “โมเลกุล”'},
+{id:'q7',level:2,plain:'Cl₂',f:'Cl₂',th:'ก๊าซคลอรีน',title:'รหัสลับ B-03',
+ scenario:'แฟ้มบันทึกระบบน้ำของศูนย์วิทยาศาสตร์เหลือเพียงสูตรที่ถอดรหัสยาก',
+ shape:'Cl2',model:false,formula:true,
+ ev:[{ic:'🗂️',t:'ข้อมูลในระบบ',x:'ก๊าซสีเหลืองอมเขียว กลิ่นฉุน เป็นพิษ ใช้ฆ่าเชื้อโรคในน้ำ'}],
+ discuss:'“Cl” เป็นสัญลักษณ์ของธาตุกี่ชนิด — C กับ l หรือไม่? ทีมรู้ได้อย่างไร?',
+ extra:{type:'count',label:'ในสูตรนี้มีธาตุกี่ชนิด?',opts:[['1','1 ชนิด'],['2','2 ชนิด'],['3','3 ชนิด']],correct:'1'},
+ kind:'element',particle:'molecule',
+ hints:hintSet('สัญลักษณ์ธาตุขึ้นต้นด้วยตัวใหญ่ อาจตามด้วยตัวเล็ก — “Cl” คือสัญลักษณ์เดียว','เลขห้อยท้าย 2 บอกว่า 1 อนุภาคมีกี่อะตอมของธาตุนั้น','สัญลักษณ์เดียว + เลขห้อย 2 → ธาตุหรือสารประกอบ? และเป็นอะตอมเดี่ยวหรือกลุ่มอะตอม?'),
+ explain:'Cl₂ มีสัญลักษณ์ธาตุเพียง Cl (คลอรีน) ชนิดเดียว จึงเป็น “ธาตุ” และ 1 อนุภาคมี 2 อะตอม จึงเป็น “โมเลกุล” (โมเลกุลของธาตุ)'},
+{id:'q8',level:2,plain:'CH₄',f:'CH₄',th:'มีเทน',title:'รหัสลับ B-04',
+ scenario:'ระบบเชื้อเพลิงของศูนย์วิทยาศาสตร์ส่งรหัสสารมาเพียงสูตรเดียว',
+ shape:'CH4',model:false,formula:true,
+ ev:[{ic:'🗂️',t:'ข้อมูลในระบบ',x:'ก๊าซไวไฟ เป็นองค์ประกอบหลักของก๊าซธรรมชาติ ใช้เป็นเชื้อเพลิง'}],
+ discuss:'สารนี้มีอะตอมรวมกี่อะตอมต่ออนุภาค? ตัวเลขนี้ช่วยตัดสิน “ธาตุหรือสารประกอบ” ได้หรือไม่?',
+ extra:{type:'count',label:'ในสูตรนี้มีธาตุกี่ชนิด?',opts:[['1','1 ชนิด'],['2','2 ชนิด'],['3','3 ชนิด']],correct:'2'},
+ kind:'compound',particle:'molecule',
+ hints:hintSet('อ่านสัญลักษณ์ในสูตรทีละตัว C และ H','สารประกอบ = ธาตุตั้งแต่ 2 ชนิดรวมกัน ส่วนจำนวนอะตอมต่ออนุภาคใช้ตัดสินอะตอม/โมเลกุล','รวมจำนวนอะตอมจากเลขห้อย (เลขที่ไม่มี = 1) แล้วเทียบเกณฑ์สองมิติ'),
+ explain:'CH₄ ประกอบด้วยธาตุ 2 ชนิด (C และ H) จึงเป็น “สารประกอบ” และ 1 อนุภาคมี 5 อะตอม (C 1, H 4) จึงเป็น “โมเลกุล”'},
+{id:'q9',level:2,plain:'Ar',f:'Ar',th:'อาร์กอน',title:'รหัสลับ B-05',
+ scenario:'รหัสสุดท้ายของด่านนี้สั้นที่สุด แต่ต้องอ่านให้ครบทั้งสองมิติ',
+ shape:'Ar',model:false,formula:true,
+ ev:[{ic:'🗂️',t:'ข้อมูลในระบบ',x:'ก๊าซเฉื่อยที่พบในอากาศประมาณ 0.9% ใช้บรรจุหลอดไฟและเป็นก๊าซป้องกันขณะเชื่อมโลหะ'}],
+ discuss:'สูตรที่ไม่มีเลขห้อยหมายความว่าอย่างไร? ตรงกับตัวอย่างใดที่ทีมเคยพบมาแล้ว?',
+ extra:{type:'count',label:'ในสูตรนี้มีธาตุกี่ชนิด?',opts:[['1','1 ชนิด'],['2','2 ชนิด'],['3','3 ชนิด']],correct:'1'},
+ kind:'element',particle:'atom',
+ hints:hintSet('ดูว่าสูตรมีสัญลักษณ์กี่ตัวและมีเลขห้อยหรือไม่','สูตรที่ไม่มีเลขห้อยหมายถึง 1 อะตอมต่ออนุภาค','เทียบกับ He และ Ne ที่เคยเจอ: ธาตุกลุ่มเดียวกันมีพฤติกรรมอนุภาคแบบเดียวกันหรือไม่'),
+ explain:'Ar มีสัญลักษณ์เดียวและไม่มีเลขห้อย จึงเป็น “ธาตุ” ที่อยู่เป็น “อะตอมเดี่ยว” (ก๊าซเฉื่อย เช่นเดียวกับ He และ Ne)'},
+/* ---------- ด่าน 3 ---------- */
+{id:'q10',level:3,plain:'O₃',f:'O₃',th:'โอโซน',title:'ปริศนา C-01: ก๊าซนักปกป้อง',
+ scenario:'สาร X ถูกเก็บจากชั้นบรรยากาศระดับสูง ห้องทดลองต้องระบุชนิดและสูตรของสารเพื่อปลดล็อกประตูบานแรก',
+ shape:'O3',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'1 อนุภาคประกอบด้วย 3 อะตอมสีเดียวกัน ต่อกันเป็นมุม'},
+     {ic:'🧪',t:'สมบัติของสาร',x:'ก๊าซสีฟ้าอ่อน กลิ่นฉุนเฉพาะตัว ช่วยดูดกลืนรังสียูวีส่วนหนึ่งในชั้นสตราโทสเฟียร์'},
+     {ic:'📋',t:'บันทึกการวิเคราะห์ธาตุ',x:'ตรวจพบธาตุเพียงชนิดเดียวในสารนี้'}],
+ discuss:'ถ้าสารมีธาตุชนิดเดียว จะมีโมเลกุลที่ต่างกันได้ไหม (เช่น 2 อะตอม กับ 3 อะตอม)? ทีมนับอะตอมจากภาพอย่างไร',
+ extra:{type:'formula',label:'สูตรเคมีของสาร X คือข้อใด?',opts:[['O₃','O₃'],['O₂','O₂'],['H₂O','H₂O'],['CO₂','CO₂']],correct:'O₃'},
+ kind:'element',particle:'molecule',
+ hints:hintSet('นับจำนวนอะตอมต่ออนุภาคในภาพ แล้วเทียบกับบันทึกการวิเคราะห์ธาตุว่ามีธาตุกี่ชนิด','ธาตุชนิดเดียวกันอาจรวมกันเป็นโมเลกุลที่มีจำนวนอะตอมต่างกันได้','ตัดตัวเลือกที่มีธาตุมากกว่า 1 ชนิดออกก่อน แล้วเลือกสูตรที่จำนวนอะตอมตรงกับภาพ'),
+ explain:'สาร X คือ O₃ (โอโซน) ธาตุชนิดเดียวคือออกซิเจน จึงเป็น “ธาตุ” และ 1 อนุภาคมี 3 อะตอม จึงเป็น “โมเลกุล” — แตกต่างจาก O₂ ที่มี 2 อะตอมและมีสมบัติต่างกัน'},
+{id:'q11',level:3,plain:'NH₃',f:'NH₃',th:'แอมโมเนีย',title:'ปริศนา C-02: กลิ่นฉุนในโรงงานปุ๋ย',
+ scenario:'เซนเซอร์ในโรงงานผลิตปุ๋ยตรวจพบก๊าซลึกลับ ทีมต้องระบุสูตรให้ถูกต้องก่อนระบบระบายอากาศจะเปิด',
+ shape:'NH3',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'อะตอมสีน้ำเงิน 1 อะตอมอยู่ตรงกลาง ต่อกับอะตอมสีขาวเล็ก 3 อะตอม'},
+     {ic:'🧪',t:'สมบัติของสาร',x:'ก๊าซกลิ่นฉุน ละลายน้ำได้ดี ใช้เป็นวัตถุดิบผลิตปุ๋ย'},
+     {ic:'📋',t:'บันทึกการวิเคราะห์ธาตุ',x:'ตรวจพบธาตุ 2 ชนิดในสารนี้'}],
+ discuss:'หลักฐานชิ้นใดช่วยตัดตัวเลือกแต่ละข้อได้บ้าง? ทีมตัดข้อใดออกก่อนและเพราะอะไร',
+ extra:{type:'formula',label:'สูตรเคมีของสารนี้คือข้อใด?',opts:[['NH₃','NH₃'],['N₂','N₂'],['CH₄','CH₄'],['H₂O','H₂O']],correct:'NH₃'},
+ kind:'compound',particle:'molecule',
+ hints:hintSet('นับจำนวนอะตอมแต่ละสีในภาพ แล้วเทียบกับจำนวนชนิดธาตุในบันทึกวิเคราะห์','สารประกอบ = ธาตุตั้งแต่ 2 ชนิด; สูตรเคมีบอกชนิดและจำนวนอะตอมของธาตุต่ออนุภาค','ตัดตัวเลือกที่มีธาตุชนิดเดียวออก แล้วเลือกสูตรที่ชนิดและจำนวนอะตอมตรงกับภาพ (สีน้ำเงิน 1 อะตอม สีขาว 3 อะตอม)'),
+ explain:'สารนี้คือ NH₃ (แอมโมเนีย) ประกอบด้วยธาตุ 2 ชนิด (N และ H) จึงเป็น “สารประกอบ” และ 1 อนุภาคมี 4 อะตอม (N 1, H 3) จึงเป็น “โมเลกุล”'},
+{id:'q12',level:3,plain:'CO',f:'CO',th:'คาร์บอนมอนอกไซด์',title:'ปริศนา C-03: ก๊าซพิษที่มองไม่เห็น',
+ scenario:'ห้องทดลองสุดท้ายก่อนถึงบอส มีสัญญาณเตือนก๊าซพิษ ทีมต้องระบุให้ถูกต้องเพื่อเปิดประตู',
+ shape:'CO',model:true,formula:false,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'1 อนุภาคมี 2 อะตอมต่างสีต่อกัน'},
+     {ic:'🧪',t:'สมบัติของสาร',x:'ก๊าซไม่มีสี ไม่มีกลิ่น เป็นพิษ เกิดจากการเผาไหม้เชื้อเพลิงเมื่อออกซิเจนไม่เพียงพอ'},
+     {ic:'📋',t:'บันทึกการวิเคราะห์ธาตุ',x:'ตรวจพบธาตุ 2 ชนิด อย่างละ 1 อะตอมต่อ 1 อนุภาค'}],
+ discuss:'สารที่มีเพียง 2 อะตอมต่ออนุภาค จะเป็นสารประกอบได้หรือไม่? เทียบกับ O₂ ต่างกันอย่างไร',
+ extra:{type:'formula',label:'สูตรเคมีของสารนี้คือข้อใด?',opts:[['CO','CO'],['CO₂','CO₂'],['C','C'],['O₂','O₂']],correct:'CO'},
+ kind:'compound',particle:'molecule',
+ hints:hintSet('ดูสีของ 2 อะตอมในภาพ — ต่างสีหรือสีเดียวกัน?','มีอะตอม 2 อะตอมไม่ได้แปลว่าเป็นธาตุเสมอไป ให้ดูว่าเป็นธาตุเดียวกันหรือต่างกัน','จับคู่หลักฐาน “2 อะตอมต่างสี อย่างละ 1” กับตัวเลือกที่มีสัญลักษณ์ 2 ชนิดและไม่มีเลขห้อย'),
+ explain:'สารนี้คือ CO (คาร์บอนมอนอกไซด์) ประกอบด้วยธาตุ 2 ชนิด (C และ O) จึงเป็น “สารประกอบ” แม้มีเพียง 2 อะตอม และเป็น “โมเลกุล” เพราะ 1 อนุภาคมี 2 อะตอมยึดกัน'},
+/* ---------- ด่าน 4 ---------- */
+{id:'q13',level:4,plain:'NaCl',f:'NaCl',th:'โซเดียมคลอไรด์',title:'BOSS 1: ผลึกปริศนา',
+ scenario:'ตัวอย่างใหม่ที่ไม่เคยพบในด่านก่อนหน้า ถูกส่งมาพร้อมข้อความของนักเรียนสมมติ ทีมต้องวิเคราะห์ทั้งสารและข้อความนั้น',
+ shape:'NaCl',model:true,formula:true,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'อนุภาคมีประจุ + และ − เรียงสลับกันเป็นโครงผลึกต่อเนื่อง ไม่มีกลุ่มอะตอมแยกเป็นหน่วย ๆ'},
+     {ic:'🧪',t:'สมบัติของสาร',x:'ของแข็งสีขาว จุดหลอมเหลวสูงประมาณ 801 °C ละลายน้ำแล้วนำไฟฟ้าได้'},
+     {ic:'💬',t:'ข้อความของนักเรียน ก',x:'“NaCl เป็นโมเลกุลของสารประกอบ เพราะมีอะตอมสองชนิดมาเกาะกัน”'}],
+ discuss:'ในภาพมีกลุ่มอนุภาคที่แยกเป็นหน่วย ๆ เหมือน H₂O หรือไม่? ถ้าไม่ ควรเรียกหน่วยของสารนี้ว่าอะไร',
+ extra:{type:'error',label:'ข้อใดวิเคราะห์ข้อผิดพลาดของนักเรียน ก ได้ถูกต้อง?',opts:[
+  ['A','ถูกต้องทั้งหมด เพราะ NaCl มีธาตุ 2 ชนิดจึงเป็นโมเลกุลของสารประกอบ'],
+  ['B','ผิดตรงที่ NaCl เป็นธาตุ ไม่ใช่สารประกอบ'],
+  ['C','ผิดตรงที่เรียกว่า “โมเลกุล” — NaCl เป็นสารประกอบไอออนิก ประกอบด้วยไอออนบวกและลบเรียงต่อเนื่อง จึงใช้ “หน่วยสูตร” ไม่ใช่โมเลกุล'],
+  ['D','ผิดตรงที่ NaCl มีธาตุเพียงชนิดเดียว']],correct:'C'},
+ kind:'compound',particle:'ionic',
+ hints:hintSet('สังเกตประจุ + และ − ในภาพ และดูว่าอนุภาคเรียงต่อเนื่องหรือแยกเป็นกลุ่มเล็ก ๆ','สารประกอบไอออนิกประกอบด้วยไอออนบวกและลบที่ดึงดูดกัน เรียงตัวเป็นโครงผลึกต่อเนื่อง','ตัดสินจากโครงสร้างในภาพ: มีกลุ่มอะตอมที่แยกจากกันชัดเจนหรือไม่? แล้วตรวจข้อความของนักเรียนทีละประโยค'),
+ explain:'NaCl เป็น “สารประกอบ” (ธาตุ 2 ชนิด: Na และ Cl) และเป็นสารประกอบไอออนิก ประกอบด้วย Na⁺ และ Cl⁻ เรียงตัวต่อเนื่องเป็นโครงผลึก ไม่มีกลุ่มอะตอมแยกเป็นหน่วย จึงไม่เรียกว่าโมเลกุล แต่ใช้ “หน่วยสูตร” NaCl ซึ่งบอกอัตราส่วนไอออนอย่างต่ำ Na⁺ : Cl⁻ = 1 : 1'},
+{id:'q14',level:4,plain:'H₂O₂',f:'H₂O₂',th:'ไฮโดรเจนเปอร์ออกไซด์',title:'BOSS 2: น้ำยาล้างแผลปริศนา',
+ scenario:'น้ำยาฆ่าเชื้อชนิดหนึ่งมีสูตรคล้ายสารที่ทีมเคยพบ แต่มีนักเรียนสมมติเข้าใจผิดจนเกือบบันทึกข้อมูลลงฐานข้อมูล',
+ shape:'H2O2',model:true,formula:true,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'1 อนุภาคมี 4 อะตอม: ออกซิเจน 2 อะตอมต่อกันตรงกลาง และไฮโดรเจน 1 อะตอมต่อที่ปลายแต่ละข้าง'},
+     {ic:'🧪',t:'สมบัติของสาร',x:'ของเหลวใส ใช้ฆ่าเชื้อและฟอกสี เมื่อสลายตัวได้น้ำและก๊าซออกซิเจน'},
+     {ic:'💬',t:'ข้อความของนักเรียน ข',x:'“H₂O₂ มีออกซิเจน 2 อะตอมเหมือน O₂ จึงเป็นธาตุ”'}],
+ discuss:'เกณฑ์การเป็นธาตุคือ “จำนวนอะตอมของธาตุหนึ่ง” หรือ “จำนวนชนิดของธาตุทั้งหมดในอนุภาค”? ทีมจะโต้แย้งนักเรียน ข อย่างไร',
+ extra:{type:'error',label:'ข้อใดวิเคราะห์ข้อผิดพลาดของนักเรียน ข ได้ถูกต้อง?',opts:[
+  ['A','ถูกต้อง เพราะมีออกซิเจน 2 อะตอมเหมือน O₂'],
+  ['B','ผิด เพราะต้องดูจำนวน “ชนิด” ของธาตุทั้งหมด H₂O₂ มี H และ O สองชนิด จึงเป็นสารประกอบ'],
+  ['C','ผิด เพราะ H₂O₂ เป็นอะตอมเดี่ยว ไม่ใช่โมเลกุล'],
+  ['D','ผิด เพราะธาตุทุกชนิดต้องเป็นอะตอมเดี่ยวเสมอ']],correct:'B'},
+ kind:'compound',particle:'molecule',
+ hints:hintSet('นับ “ชนิด” ของอะตอมในภาพ (นับสี) ไม่ใช่นับจำนวนอะตอมทั้งหมด','สารประกอบมีธาตุตั้งแต่ 2 ชนิดในอนุภาคเดียวกัน แม้อะตอมของธาตุใดธาตุหนึ่งจะซ้ำกัน','เปรียบเทียบกับ O₂ จากด่านแรก: ภาพสองภาพต่างกันอย่างไร? แล้วจึงตรวจข้อความของนักเรียน ข'),
+ explain:'H₂O₂ เป็น “สารประกอบ” เพราะประกอบด้วยธาตุ 2 ชนิด (H และ O) การมี O 2 อะตอมไม่ได้ทำให้เป็นธาตุ และเป็น “โมเลกุล” เพราะ 1 อนุภาคมี 4 อะตอมยึดกัน นักเรียน ข ผิดที่ใช้จำนวนอะตอมของธาตุหนึ่งมาตัดสินแทนจำนวนชนิดของธาตุทั้งหมด'},
+{id:'q15',level:4,plain:'P₄',f:'P₄',th:'ฟอสฟอรัสขาว',title:'BOSS 3: ของแข็งไวไฟ',
+ scenario:'ภารกิจตัดสินสุดท้าย ตัวอย่างของแข็งไวไฟถูกเก็บไว้ใต้น้ำ นักเรียนสมมติอ้างกฎข้อหนึ่งที่ฟังดูมีเหตุผล แต่ทีมต้องตรวจสอบ',
+ shape:'P4',model:true,formula:true,
+ ev:[{ic:'🖥️',t:'ผลสแกนแบบจำลอง',x:'4 อะตอมสีเดียวกันยึดกันเป็นกลุ่มเล็ก ๆ แต่ละกลุ่มแยกจากกลุ่มอื่น'},
+     {ic:'🧪',t:'สมบัติของสาร',x:'ของแข็งคล้ายขี้ผึ้ง สีขาวอมเหลือง ลุกไหม้ในอากาศได้ง่าย จึงเก็บไว้ใต้น้ำ'},
+     {ic:'💬',t:'ข้อความของนักเรียน ค',x:'“โมเลกุลที่มีอะตอมมากกว่า 2 อะตอม ต้องเป็นสารประกอบ”'}],
+ discuss:'ทีมหาตัวอย่างค้านนักเรียน ค ได้หรือไม่ (ลองนึกถึง O₃ ในด่านก่อน) และเกณฑ์ที่ถูกต้องคืออะไร',
+ extra:{type:'error',label:'ข้อใดวิเคราะห์ข้อผิดพลาดของนักเรียน ค ได้ถูกต้อง?',opts:[
+  ['A','ถูกต้อง เพราะโมเลกุลใหญ่ต้องเป็นสารประกอบ'],
+  ['B','ผิด เพราะ P₄ เป็นสารประกอบที่มีธาตุ 4 ชนิด'],
+  ['C','ผิด เพราะการเป็นสารประกอบขึ้นกับจำนวน “ชนิด” ของธาตุ ไม่ใช่จำนวนอะตอม P₄ มีฟอสฟอรัสชนิดเดียวจึงเป็นธาตุ แม้เป็นโมเลกุล 4 อะตอม'],
+  ['D','ผิด เพราะ P₄ เป็นอะตอมเดี่ยว']],correct:'C'},
+ kind:'element',particle:'molecule',
+ hints:hintSet('นับจำนวนสีในภาพ และนับจำนวนอะตอมต่อกลุ่ม','ธาตุ/สารประกอบดูที่ “ชนิดของธาตุ” ส่วนอะตอม/โมเลกุลดูที่ “จำนวนอะตอมที่ยึดกันในหนึ่งอนุภาค” สองมิตินี้แยกจากกัน','หาตัวอย่างที่ขัดกับกฎของนักเรียน ค จากสารที่เคยพบ แล้วดูว่าตัวอย่างนั้นมีกี่ชนิดธาตุ'),
+ explain:'P₄ เป็น “ธาตุ” เพราะมีฟอสฟอรัสชนิดเดียว และเป็น “โมเลกุล” เพราะ 1 อนุภาคมี 4 อะตอมยึดกัน กฎของนักเรียน ค ผิดเพราะสับสนสองมิติ: จำนวนอะตอมต่ออนุภาคไม่ได้ตัดสินว่าเป็นธาตุหรือสารประกอบ (เช่น O₃ และ P₄ เป็นโมเลกุลของธาตุ)'}
+];
+
+const RUBRIC={
+ reason:{max:20,label:'การอธิบายเหตุผลจากหลักฐาน',lv:[[20,'ครบ: อ้างหลักฐานเฉพาะเจาะจง และเชื่อมกับหลักการถูกต้อง'],[15,'ดี: อ้างหลักฐานและหลักการ แต่ขาดรายละเอียดบางส่วน'],[10,'พอใช้: อ้างหลักฐาน แต่ยังไม่เชื่อมหลักการ'],[5,'เริ่มต้น: เหตุผลทั่วไป ไม่อิงหลักฐานในโจทย์'],[0,'ยังไม่ประเมิน / ไม่มีเหตุผล / คลาดเคลื่อน']]},
+ formula:{max:10,label:'การใช้สูตรเคมีและสัญลักษณ์ถูกต้อง',lv:[[10,'ใช้สูตร/สัญลักษณ์ถูกต้องครบถ้วน'],[5,'ถูกบางส่วน (เช่น เลขห้อยหรือสัญลักษณ์ผิดบางจุด)'],[0,'ยังไม่ประเมิน / ไม่ใช้ / ไม่ถูกต้อง']]},
+ debate:{max:20,label:'การโต้แย้งและแก้ไขความเข้าใจคลาดเคลื่อนอย่างมีเหตุผล',lv:[[20,'โต้แย้งด้วยหลักฐาน และแก้ไขความเข้าใจคลาดเคลื่อนได้ถูกต้อง'],[15,'โต้แย้งด้วยหลักฐาน แก้ไขได้บางส่วน'],[10,'เสนอความเห็นต่างแต่ยังขาดหลักฐาน'],[5,'ตั้งคำถามหรือสงสัย แต่ยังไม่แก้ไขความเข้าใจ'],[0,'ยังไม่ประเมิน / ไม่มีการโต้แย้ง']]}
+};
+const MISC={
+ 'atom-compound':'ธาตุอาจเป็นอะตอมเดี่ยวได้ (เช่นก๊าซเฉื่อย He, Ne, Ar) — ธาตุ = มีอะตอมชนิดเดียวกัน ไม่ได้แปลว่าต้องมีหลายอะตอมต่อกัน',
+ 'molecule-compound':'โมเลกุลไม่จำเป็นต้องเป็นสารประกอบ — O₂, N₂, Cl₂, O₃ และ P₄ เป็นโมเลกุลของธาตุ เพราะมีอะตอมของธาตุชนิดเดียว',
+ 'compound-element':'สารประกอบดูที่ “ชนิด” ของธาตุ (ตั้งแต่ 2 ชนิด) ไม่ใช่จำนวนอะตอมรวมหรือจำนวนอะตอมของธาตุหนึ่ง เช่น H₂O₂ และ CO เป็นสารประกอบ',
+ 'atom-molecule':'อะตอมเดี่ยว (He, Ne, Ar) มี 1 อะตอมต่ออนุภาคและไม่มีพันธะกับอะตอมอื่น จึงไม่เรียกว่าโมเลกุล',
+ 'molecule-atom':'โมเลกุลคือกลุ่มอะตอมตั้งแต่ 2 อะตอมที่ยึดกัน — ถ้าในภาพมีเส้นเชื่อมหรือสูตรมีเลขห้อย ให้นับอะตอมในกลุ่มก่อน',
+ 'ionic-molecule':'สารประกอบไอออนิกอย่าง NaCl เป็นโครงผลึกของไอออนบวกและลบ ไม่มีโมเลกุลแยกเป็นหน่วย จึงใช้ “หน่วยสูตร” แทนคำว่าโมเลกุล',
+ 'other-ionic':'ตัวเลือก “ไอออน/หน่วยสูตร” ใช้กับสารที่เป็นโครงผลึกไอออนิกเท่านั้น — ให้ตรวจประจุ + และ − ในภาพก่อนเลือก'
+};
+
+/* ===================== state ===================== */
+let state;
+function newState(){
+ return {mode:'solo',name:'',members:[],qs:QUESTIONS,qi:0,level:1,remaining:DURATION,paused:false,running:false,
+  last:0,answers:{},hints:{},opts:{},sound:false,timer:null,stars:{},ended:false,qStart:0,pauseAt:0,saved:false};
+}
+state=newState();
+const cur=()=>state.qs[state.qi];
+const autoMaxOf=q=>100+(q.extra?EXTRA_PTS[q.extra.type]:0);
+const rubCrit=q=>(q.extra&&q.extra.type!=='error')?['reason','debate']:['reason','formula','debate'];
+const maxOf=q=>autoMaxOf(q)+rubCrit(q).reduce((s,k)=>s+RUBRIC[k].max,0);
+const rubTotal=a=>a.rubric.reason+a.rubric.formula+a.rubric.debate;
+function totals(){
+ let auto=0,rub=0,max=0,autoMax=0;
+ state.qs.forEach(q=>{max+=maxOf(q);autoMax+=autoMaxOf(q);const a=state.answers[q.id];if(a){auto+=a.auto;rub+=rubTotal(a);}});
+ return {auto,rub,total:auto+rub,max,autoMax};
+}
+
+/* ===================== sound & fx ===================== */
+let ac=null;
+function tone(f,d,type,v,when){
+ if(!state.sound)return;
+ try{
+  ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+  const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+(when||0);
+  o.type=type||'sine';o.frequency.value=f;o.connect(g);g.connect(ac.destination);
+  g.gain.setValueAtTime(v||.06,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.start(t);o.stop(t+d+.02);
+ }catch(e){}
+}
+const sfx={
+ click:()=>tone(520,.05,'square',.03),
+ ok:()=>{tone(660,.12);tone(880,.2,'sine',.06,.12);},
+ part:()=>{tone(440,.15);tone(520,.15,'sine',.05,.15);},
+ bad:()=>tone(170,.35,'sawtooth',.05),
+ unlock:()=>[523,659,784,1046].forEach((f,i)=>tone(f,.16,'triangle',.06,i*.1))
+};
+function burst(good){
+ if(reduced)return;
+ const fx=$('#fx'),cols=good?['#2cff9a','#27e1ff','#b25cff','#ffd166']:['#ff4d7d','#ff9f43'];
+ const n=good?22:10;
+ for(let i=0;i<n;i++){
+  const p=document.createElement('span');p.className='p';
+  const ang=Math.random()*Math.PI*2,dist=90+Math.random()*180;
+  p.style.left='50%';p.style.top='40%';p.style.background=cols[i%cols.length];
+  p.style.setProperty('--dx',Math.cos(ang)*dist+'px');p.style.setProperty('--dy',Math.sin(ang)*dist+'px');
+  fx.appendChild(p);setTimeout(()=>p.remove(),1100);
+ }
+}
+
+/* ===================== particle model drawing ===================== */
+function defs(){
+ return '<defs>'+Object.keys(EL).map(k=>{const c=EL[k].c;return `<radialGradient id="g-${k}" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".35" stop-color="${c}"/><stop offset="1" stop-color="${c}" stop-opacity=".75"/></radialGradient>`;}).join('')+'</defs>';
+}
+function bondLines(x1,y1,x2,y2,order){
+ const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+ const offs=order===1?[0]:order===2?[-3.5,3.5]:[-5,0,5];
+ return offs.map(o=>`<line class="bond" x1="${(x1+nx*o).toFixed(1)}" y1="${(y1+ny*o).toFixed(1)}" x2="${(x2+nx*o).toFixed(1)}" y2="${(y2+ny*o).toFixed(1)}"/>`).join('');
+}
+function particleSVG(sh,showSym){
+ let s='';
+ sh.b.forEach(([i,j,o])=>{const A=sh.a[i],B=sh.a[j];s+=bondLines(A[1],A[2],B[1],B[2],o);});
+ sh.a.forEach(([e,x,y])=>{
+  const d=EL[e];
+  s+=`<circle cx="${x}" cy="${y}" r="${d.r}" fill="url(#g-${e})" stroke="rgba(255,255,255,.55)" stroke-width="1"/>`;
+  if(showSym)s+=`<text class="sym" x="${x}" y="${y+4}" font-size="${d.r>11?12:10}">${e}</text>`;
+ });
+ return s;
+}
+function latticeSVG(showSym){
+ let s='';const cols=5,rows=4,gx=54,gy=46,x0=(360-(cols-1)*gx)/2,y0=(220-(rows-1)*gy)/2;
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+  const na=(r+c)%2===0,e=na?'Na':'Cl',d=EL[e],x=x0+c*gx,y=y0+r*gy;
+  const t=showSym?(na?'Na⁺':'Cl⁻'):(na?'+':'−');
+  s+=`<g class="bob" style="animation-delay:${(-(r+c)*.4).toFixed(1)}s"><circle cx="${x}" cy="${y}" r="${d.r}" fill="url(#g-${e})" stroke="rgba(255,255,255,.55)"/><text class="sym" x="${x}" y="${y+4}" font-size="${showSym?9:13}">${t}</text></g>`;
+ }
+ return s;
+}
+function modelSVG(key,showSym){
+ const sh=SHAPES[key];let body='';
+ if(sh.lattice)body=latticeSVG(showSym);
+ else{
+  const single=sh.a.length===1;
+  const P=single?[[60,55],[180,38],[300,66],[105,150],[225,135],[315,180]]:[[88,62],[262,56],[100,158],[262,156]];
+  const ROT=[0,25,-20,30,-30,15];
+  P.forEach((p,i)=>{body+=`<g transform="translate(${p[0]},${p[1]}) rotate(${single?0:ROT[i]})"><g class="bob" style="animation-delay:${(-i*.7).toFixed(1)}s">${particleSVG(sh,showSym)}</g></g>`;});
+ }
+ return `<svg class="scene" viewBox="0 0 360 220" role="img" aria-label="แบบจำลองอนุภาคของตัวอย่าง">${defs()}${body}</svg>`;
+}
+function legendHTML(key,showSym){
+ if(key==='NaCl')return `<span class="lg"><i style="background:${EL.Na.c}"></i>${showSym?'Na⁺ ไอออนบวก':'ไอออนบวก (+)'}</span><span class="lg"><i style="background:${EL.Cl.c}"></i>${showSym?'Cl⁻ ไอออนลบ':'ไอออนลบ (−)'}</span>`;
+ const els=Array.from(new Set(SHAPES[key].a.map(a=>a[0])));
+ return els.map((e,i)=>`<span class="lg"><i style="background:${EL[e].c}"></i>${showSym?e+' ('+EL[e].n+')':'ธาตุชนิดที่ '+(i+1)}</span>`).join('')+
+  (SHAPES[key].b.length?'<span class="lg">━ เส้นเชื่อม = อะตอมยึดกัน</span>':'');
+}
+
+/* ===================== leaderboard ===================== */
+function loadBoard(){try{return JSON.parse(localStorage.getItem('atomHuntersBoard')||'[]');}catch(e){return [];}}
+function saveBoard(b){try{localStorage.setItem('atomHuntersBoard',JSON.stringify(b.slice(0,50)));}catch(e){}}
+function boardHTML(){
+ const b=loadBoard().sort((x,y)=>y.s-x.s).slice(0,8);
+ if(!b.length)return '<p class="mut">ยังไม่มีผลการเล่น — เล่นให้จบเกมเพื่อบันทึกคะแนนของคุณ</p>';
+ return '<div style="overflow-x:auto"><table><tr><th>#</th><th>ผู้เล่น/ทีม</th><th>XP</th><th>แม่นยำ</th><th>วันที่</th></tr>'+
+  b.map((r,i)=>`<tr><td>${i+1}</td><td>${r.m==='team'?'👥':'👤'} ${esc(r.n)}</td><td>${r.s}</td><td>${r.p}%</td><td>${esc(r.d)}</td></tr>`).join('')+'</table></div>';
+}
+
+/* ===================== screens & HUD ===================== */
+const SCREENS=['start','intro','mission','clear','summary'];
+function show(id){
+ SCREENS.forEach(s=>{$('#s-'+s).hidden=(s!==id);});
+ $('#hud').hidden=(id==='start'||id==='summary');
+ window.scrollTo(0,0);
+ const h=$('#s-'+id+' h1, #s-'+id+' h2');
+ if(h){h.setAttribute('tabindex','-1');try{h.focus({preventScroll:true});}catch(e){}}
+}
+function updateHud(){
+ const t=totals();
+ $('#hudXp').textContent=t.total;
+ $('#hudTime').textContent=fmt(state.remaining);
+ const tb=$('#timeBox');tb.classList.toggle('warn',state.remaining<=300&&state.remaining>60);tb.classList.toggle('danger',state.remaining<=60);
+ $('#hudSteps').innerHTML=LEVELS.map((l,i)=>{const n=i+1;const cls=n<state.level?'done':(n===state.level?'on':'');return `<span class="st ${cls}">${n<state.level?'✔':l.ic} ด่าน ${n}</span>`;}).join('');
+ const done=Object.keys(state.answers).length,total=state.qs.length,pct=Math.round(done/total*100);
+ $('#hudBar').style.width=pct+'%';$('#hudBarWrap').setAttribute('aria-valuenow',pct);
+ $('#hudBarLbl').textContent=`ความคืบหน้า ${done}/${total} ภารกิจ`;
+}
+function tick(){
+ if(!state.running||state.paused)return;
+ const now=Date.now(),d=Math.floor((now-state.last)/1000);
+ if(d>=1){state.last+=d*1000;state.remaining=Math.max(0,state.remaining-d);updateHud();if(state.remaining<=0)endGame('time');}
+}
+function startTimer(){
+ clearInterval(state.timer);state.running=true;state.paused=false;state.last=Date.now();
+ state.timer=setInterval(tick,500);
+}
+function setPause(p){
+ if(!state.running)return;
+ if(p&&!state.paused){state.paused=true;state.pauseAt=Date.now();$('#pauseOv').hidden=false;}
+ else if(!p&&state.paused){const dt=Date.now()-state.pauseAt;state.paused=false;state.last=Date.now();state.qStart+=dt;$('#pauseOv').hidden=true;}
+}
+
+/* ===================== flow ===================== */
+function startGame(){
+ const mode=$('input[name=mode]:checked').value,msg=$('#startMsg');msg.textContent='';
+ let name='',members=[];
+ if(mode==='team'){
+  name=$('#teamName').value.trim()||'ทีม ATOM';
+  members=$$('.mem').map(i=>i.value.trim()).filter(Boolean);
+  if(members.length<4){msg.textContent='โหมดทีมต้องกรอกชื่อสมาชิก 4–5 คน (ตอนนี้กรอกแล้ว '+members.length+' คน)';$('.mem').focus();return;}
+ }else name=$('#soloName').value.trim()||'ผู้เล่น';
+ clearInterval(state.timer);
+ const snd=state.sound;state=newState();state.sound=snd;
+ state.mode=mode;state.name=name;state.members=members;
+ startTimer();sfx.click();
+ showIntro(1);
+}
+function showIntro(level){
+ state.level=level;const L=LEVELS[level-1];
+ $('#inIcon').textContent=L.ic;$('#inBadge').textContent='ด่านที่ '+level+' จาก 4';
+ $('#inTitle').textContent=L.n;$('#inSub').textContent=L.s;$('#inStory').textContent=L.story;
+ $('#inHow').innerHTML='<h3>วิธีเล่นด่านนี้</h3><ul class="tight">'+L.how.map(h=>`<li>${esc(h)}</li>`).join('')+'</ul>';
+ const n=state.qs.filter(q=>q.level===level).length;
+ $('#inTime').textContent=`${n} ภารกิจ · เวลาที่แนะนำ ประมาณ ${L.min} นาที (เวลารวมทั้งเกม 50 นาที)`;
+ show('intro');updateHud();
+}
+function loadQuestion(i){
+ state.qi=i;const q=cur();state.level=q.level;state.qStart=Date.now();
+ renderMission();show('mission');updateHud();
+}
+function optCard(name,val,title,desc){
+ return `<label class="opt"><input type="radio" name="${name}" value="${esc(val)}"><span class="ob"><b>${title}</b><small>${desc}</small></span></label>`;
+}
+function rolesHTML(){
+ if(state.mode==='solo')return '<div class="roles" aria-label="บทบาทของคุณ"><span class="role">🧮 วิเคราะห์สูตร</span><span class="role">🔭 อ่านแบบจำลอง</span><span class="role">🕵️ ตรวจหลักฐาน</span><span class="role">📣 สรุปรายงาน</span><small>คุณรับครบทุกบทบาทในภารกิจนี้</small></div>';
+ const n=state.members.length,used=ROLES.slice(0,n);
+ return '<div class="roles" aria-label="บทบาทของสมาชิกในภารกิจนี้">'+state.members.map((m,i)=>{const r=used[(i+state.qi)%n];return `<span class="role">${r.ic} <b>${esc(m)}</b> → ${r.n}</span>`;}).join('')+'</div>';
+}
+function renderMission(){
+ const q=cur(),L=LEVELS[q.level-1];
+ const inLevel=state.qs.filter(x=>x.level===q.level),idx=inLevel.indexOf(q)+1;
+ if(!state.opts[q.id])state.opts[q.id]=q.extra?shuffle(q.extra.opts):null;
+ const evHTML=q.ev.map(e=>`<div class="evc"><b>${e.ic} ${esc(e.t)}</b>${rich(e.x)}</div>`).join('');
+ const modelHTML=q.model?`<div class="panel" id="modelPanel">${modelSVG(q.shape,false)}<div class="legend" id="legend">${legendHTML(q.shape,false)}</div></div>`:'';
+ const formulaHTML=q.formula?`<div class="panel"><div class="formula" id="formulaBox">${fHTML(esc(q.f))}</div></div>`:
+  `<div class="panel"><div class="formula hid" id="formulaBox">สูตรเคมี: ???</div></div>`;
+ const partOpts=[optCard('particle','atom','⚛ อะตอม','1 อนุภาค = 1 อะตอม (อะตอมเดี่ยว)'),optCard('particle','molecule','🔗 โมเลกุล','กลุ่มอะตอมตั้งแต่ 2 อะตอมที่ยึดกัน')];
+ if(q.level===4)partOpts.push(optCard('particle','ionic','🧊 ไอออน / หน่วยสูตร','ไอออนบวกและลบเรียงต่อเนื่อง (ไม่ใช่โมเลกุล)'));
+ let extraHTML='';
+ if(q.extra){
+  const tag=q.extra.type==='error'?'🔎 โบนัสตรวจจับข้อผิดพลาด (+15 XP)':q.extra.type==='formula'?'🧪 คำถามย่อย: เลือกสูตร (+10 XP)':'🧮 คำถามย่อย: นับชนิดธาตุ (+10 XP)';
+  extraHTML=`<fieldset><legend>${tag}</legend><p style="margin:0 0 8px">${rich(q.extra.label)}</p><div class="opts" style="grid-template-columns:${q.extra.type==='error'?'1fr':'repeat(auto-fit,minmax(130px,1fr))'}">`+
+   state.opts[q.id].map(o=>optCard('extra',o[0],q.extra.type==='error'?'':fHTML(esc(o[1])),'').replace('<b></b><small></small>',q.extra.type==='error'?`<span>${rich(o[1])}</span>`:`<b>${fHTML(esc(o[1]))}</b>`)).join('')+'</div></fieldset>';
+ }
+ $('#missionCard').innerHTML=`
+  <span class="badge">${L.ic} ด่าน ${q.level} · ${esc(L.n)} · ภารกิจ ${idx}/${inLevel.length}</span>
+  <h2>${esc(q.title)}</h2>
+  <p class="scenario">${esc(q.scenario)}</p>
+  ${rolesHTML()}
+  <div class="flow" aria-label="ขั้นตอน"><span>① คิดเดี่ยว</span><span>② อภิปรายในกลุ่ม</span><span>③ ตกลงคำตอบ + เขียนเหตุผล</span><span>④ ส่งคำตอบ</span></div>
+  <div class="ev"><div>${modelHTML}${q.model?'':formulaHTML}</div><div>${q.model?formulaHTML:''}${evHTML}</div></div>
+  <div class="discuss">💬 <b>ประเด็นอภิปราย:</b> ${rich(q.discuss)}</div>
+  <form id="ansForm" novalidate>
+   <fieldset><legend>มิติที่ 1 · ชนิดของสาร</legend><div class="opts">
+    ${optCard('kind','element','⚗ ธาตุ','อะตอมของธาตุชนิดเดียวกันทั้งหมด')}
+    ${optCard('kind','compound','🧬 สารประกอบ','ธาตุตั้งแต่ 2 ชนิดรวมกัน')}</div></fieldset>
+   <fieldset><legend>มิติที่ 2 · ลักษณะอนุภาค</legend><div class="opts">${partOpts.join('')}</div></fieldset>
+   ${extraHTML}
+   <label class="fld" for="reason">✍ เหตุผลประกอบคำตอบ (อ้างหลักฐานจากโจทย์)</label>
+   <div class="chips" aria-label="ตัวช่วยเริ่มประโยค">
+    <button type="button" class="chip" data-ins="ข้อสรุป: สารนี้เป็น ____ และเป็น ____ ">+ ข้อสรุป</button>
+    <button type="button" class="chip" data-ins="หลักฐาน: จากภาพ/สูตร/สมบัติ พบว่า ____ ">+ หลักฐาน</button>
+    <button type="button" class="chip" data-ins="หลักการ: ธาตุคือ ____ ส่วนสารประกอบคือ ____ ; อะตอมคือ ____ ส่วนโมเลกุลคือ ____ ">+ หลักการ</button>
+   </div>
+   <textarea id="reason" maxlength="600" placeholder="ตัวอย่างโครงสร้าง: ข้อสรุป – หลักฐาน – หลักการ"></textarea>
+   <label class="chk"><input type="checkbox" id="discussed"><span>${state.mode==='team'?'ทีมได้อภิปรายและตกลงคำตอบร่วมกันแล้ว':'ฉันได้ทบทวนหลักฐานและตรวจเหตุผลของตัวเองแล้ว'}</span></label>
+   <div class="hints"><div class="row" id="hintBtns">
+    <button type="button" class="btn warn" data-h="0">💡 คำใบ้ 1: สังเกตหลักฐาน (−3)</button>
+    <button type="button" class="btn warn" data-h="1" disabled>💡 คำใบ้ 2: เชื่อมหลักการ (−5)</button>
+    <button type="button" class="btn warn" data-h="2" disabled>💡 คำใบ้ 3: แนวทางวิเคราะห์ (−8)</button></div>
+    <div id="hintOut" aria-live="polite"></div></div>
+   <div id="msg" class="msg err" role="alert"></div>
+   <button type="submit" class="btn primary big" id="btnSubmit">✅ ส่งคำตอบ (ส่งได้ครั้งเดียว)</button>
+  </form>
+  <div id="fb" aria-live="polite"></div>`;
+ wireMission();
+}
+function wireMission(){
+ const q=cur();
+ $$('#ansForm .opt input').forEach(inp=>inp.addEventListener('change',()=>{
+  $$(`#ansForm input[name="${inp.name}"]`).forEach(x=>x.closest('.opt').classList.toggle('sel',x.checked));sfx.click();
+ }));
+ $$('.chip').forEach(b=>b.addEventListener('click',()=>{const t=$('#reason');t.value+=(t.value&&!/\s$/.test(t.value)?'\n':'')+b.dataset.ins;t.focus();}));
+ $$('#hintBtns button').forEach(b=>b.addEventListener('click',()=>useHint(Number(b.dataset.h))));
+ $('#ansForm').addEventListener('submit',submitAnswer);
+}
+function useHint(n){
+ const q=cur();if(state.answers[q.id])return;
+ const used=state.hints[q.id]||0;if(n!==used)return;
+ state.hints[q.id]=used+1;sfx.click();
+ const b=$$('#hintBtns button');b[n].disabled=true;if(b[n+1])b[n+1].disabled=false;
+ const box=document.createElement('div');box.className='hint-box';
+ box.innerHTML=`<b>💡 คำใบ้ระดับ ${n+1} (หัก ${HINT_COST[n]} XP):</b> ${rich(q.hints[n])}`;
+ $('#hintOut').appendChild(box);
+}
+function misconceptions(q,a){
+ const t=[];
+ if(!a.okA){if(q.kind==='element')t.push(q.particle==='atom'?'atom-compound':'molecule-compound');else t.push('compound-element');}
+ if(!a.okB){
+  if(q.particle==='atom'&&a.particle==='molecule')t.push('atom-molecule');
+  else if(q.particle==='molecule'&&a.particle==='atom')t.push('molecule-atom');
+  else if(q.particle==='ionic')t.push('ionic-molecule');
+  else if(a.particle==='ionic')t.push('other-ionic');
+ }
+ return t;
+}
+function submitAnswer(e){
+ e.preventDefault();
+ const q=cur();
+ if(state.answers[q.id]||state.ended)return;
+ const f=e.target,kind=f.elements['kind'].value,particle=f.elements['particle'].value;
+ const extra=q.extra?f.elements['extra'].value:'';
+ const reason=$('#reason').value.trim(),disc=$('#discussed').checked;
+ const miss=[];
+ if(!kind)miss.push('มิติที่ 1 (ธาตุ/สารประกอบ)');
+ if(!particle)miss.push('มิติที่ 2 (ลักษณะอนุภาค)');
+ if(q.extra&&!extra)miss.push('คำถามย่อย');
+ if(reason.length<12)miss.push('เหตุผลประกอบคำตอบ (อธิบายโดยอ้างหลักฐานอย่างน้อย 1–2 ประโยค)');
+ if(!disc)miss.push('ติ๊กยืนยันว่าได้อภิปราย/ทบทวนแล้ว');
+ const msg=$('#msg');
+ if(miss.length){msg.textContent='ยังตอบไม่ครบ: '+miss.join(' · ');sfx.bad();return;}
+ msg.textContent='';
+ const hu=state.hints[q.id]||0;
+ let penalty=0;for(let i=0;i<hu;i++)penalty+=HINT_COST[i];
+ const a={qid:q.id,kind,particle,extra,reason,hintsUsed:hu,penalty,
+  okA:kind===q.kind,okB:particle===q.particle,okE:q.extra?extra===q.extra.correct:null,
+  sec:Math.max(1,Math.round((Date.now()-state.qStart)/1000)),rubric:{reason:0,formula:0,debate:0},reflect:''};
+ a.ptsA=a.okA?50:0;a.ptsB=a.okB?50:0;a.ptsE=(q.extra&&a.okE)?EXTRA_PTS[q.extra.type]:0;
+ a.auto=Math.max(0,a.ptsA+a.ptsB+a.ptsE-penalty);
+ a.tags=misconceptions(q,a);
+ state.answers[q.id]=a;
+ $$('#ansForm input,#ansForm textarea,#ansForm button').forEach(x=>x.disabled=true);
+ // mark option cards
+ const mark=(name,correct)=>{$$(`#ansForm input[name="${name}"]`).forEach(x=>{const lab=x.closest('.opt');if(x.value===correct)lab.classList.add('correct');else if(x.checked)lab.classList.add('wrong');});};
+ mark('kind',q.kind);mark('particle',q.particle);if(q.extra)mark('extra',q.extra.correct);
+ // reveal formula & symbols
+ $('#formulaBox').classList.remove('hid');$('#formulaBox').innerHTML=fHTML(esc(q.f));
+ if(q.model){$('#modelPanel').innerHTML=modelSVG(q.shape,true)+`<div class="legend">${legendHTML(q.shape,true)}</div>`;}
+ renderFeedback(q,a);
+ const all=a.okA&&a.okB&&(a.okE!==false);
+ const card=$('#missionCard');
+ if(all){card.classList.add('flash');burst(true);sfx.ok();}else if(a.okA||a.okB){burst(false);sfx.part();}else{card.classList.add('shake');burst(false);sfx.bad();}
+ setTimeout(()=>card.classList.remove('flash','shake'),900);
+ updateHud();
+ $('#fb').scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});
+}
+function renderFeedback(q,a){
+ const full=a.okA&&a.okB&&(a.okE!==false);
+ const cls=full?'good':(a.okA||a.okB?'part':'bad');
+ const head=full?'✅ ถูกต้องทั้งสองมิติ — ปลดล็อกข้อมูลสำเร็จ!':(a.okA||a.okB?'⚠️ ถูกบางส่วน — ตรวจเฉลยและปรับความเข้าใจ':'❌ ยังไม่ถูกต้อง — อ่านเฉลยแล้วอภิปรายความต่างกับคำตอบของทีม');
+ const ans=(ok,mine,right)=>ok?`<span class="ok">✔ ${mine}</span>`:`<span class="no">✘ ${mine}</span> → เฉลย: <b>${right}</b>`;
+ let rows=`<tr><td>มิติที่ 1: ชนิดของสาร</td><td>${ans(a.okA,KIND_L[a.kind],KIND_L[q.kind])}</td><td>${a.ptsA}/50</td></tr>
+  <tr><td>มิติที่ 2: ลักษณะอนุภาค</td><td>${ans(a.okB,esc(PART_L[a.particle]),esc(PART_L[q.particle]))}</td><td>${a.ptsB}/50</td></tr>`;
+ if(q.extra){
+  const mine=q.extra.opts.find(o=>o[0]===a.extra)[1],right=q.extra.opts.find(o=>o[0]===q.extra.correct)[1];
+  const short=s=>s.length>60?s.slice(0,57)+'…':s;
+  rows+=`<tr><td>${q.extra.type==='error'?'โบนัสตรวจจับข้อผิดพลาด':q.extra.type==='formula'?'เลือกสูตร':'นับชนิดธาตุ'}</td><td>${a.okE?`<span class="ok">✔ ${rich(short(mine))}</span>`:`<span class="no">✘ ${rich(short(mine))}</span> → เฉลย: <b>${rich(short(right))}</b>`}</td><td>${a.ptsE}/${EXTRA_PTS[q.extra.type]}</td></tr>`;
+ }
+ if(a.penalty)rows+=`<tr><td>ใช้คำใบ้ ${a.hintsUsed} ระดับ</td><td>—</td><td class="no">−${a.penalty}</td></tr>`;
+ const misc=a.tags.map(t=>`<li>${rich(MISC[t])}</li>`).join('');
+ const rub=rubCrit(q).map(k=>{
+  const R=RUBRIC[k];
+  return `<div style="margin-bottom:8px"><label class="fld" for="rb-${k}">${R.label} (สูงสุด ${R.max})</label><select id="rb-${k}" data-k="${k}">${R.lv.slice().sort((x,y)=>y[0]-x[0]).map(l=>`<option value="${l[0]}"${l[0]===0?' selected':''}>${l[0]} — ${l[1]}</option>`).join('')}</select></div>`;
+ }).join('');
+ const last=state.qi===state.qs.length-1,lvEnd=last||state.qs[state.qi+1].level!==q.level;
+ $('#fb').innerHTML=`<div class="fb ${cls}">
+  <h3>${head}</h3>
+  <div style="overflow-x:auto"><table><tr><th>หัวข้อ</th><th>คำตอบของคุณ</th><th>คะแนน</th></tr>${rows}</table></div>
+  <div class="evc" style="margin-top:10px"><b>📖 เฉลยและเหตุผลทางวิทยาศาสตร์ — ${fHTML(esc(q.f))} (${esc(q.th)})</b>${rich(q.explain)}</div>
+  ${misc?`<div class="evc" style="border-color:var(--warn)"><b>🛠 จุดที่ควรปรับความเข้าใจ</b><ul class="tight">${misc}</ul></div>`:''}
+  <details open style="margin-top:12px"><summary><b>📝 ประเมินด้วยรูบริค (ครู/เพื่อนร่วมทีม)</b></summary>
+   <p><small>ประเมินจากเนื้อหาและการอ้างหลักฐานในเหตุผลของผู้เล่น ไม่ใช้ความยาวข้อความเป็นเกณฑ์ · เหตุผลที่ผู้เล่นเขียน:</small></p>
+   <blockquote style="margin:6px 0;padding:8px 12px;border-left:4px solid var(--neon);background:rgba(255,255,255,.05);white-space:pre-wrap">${esc(a.reason)}</blockquote>
+   ${rub}
+  </details>
+  <label class="fld" for="reflect" style="margin-top:8px">🔄 ปรับความเข้าใจ (ไม่บังคับ): ตอนนี้ฉัน/ทีมเข้าใจใหม่ว่า...</label>
+  <textarea id="reflect" maxlength="400" placeholder="เช่น แก้ไขความเข้าใจที่คลาดเคลื่อนของเรา หรือสรุปสิ่งที่ได้เรียนรู้จากภารกิจนี้"></textarea>
+  <p id="scoreLine" style="font-weight:700"></p>
+  <button class="btn primary big" id="btnNext">${lvEnd?'🔓 จบด่านนี้':'ภารกิจถัดไป ▶'}</button>
+ </div>`;
+ const upd=()=>{
+  const rt=rubTotal(a);
+  $('#scoreLine').innerHTML=`คะแนนภารกิจนี้: ระบบ ${a.auto} + รูบริค ${rt} = <span class="neon">${a.auto+rt}</span> / ${maxOf(q)}`;
+  updateHud();
+ };
+ $$('#fb select').forEach(s=>s.addEventListener('change',()=>{a.rubric[s.dataset.k]=Number(s.value);upd();sfx.click();}));
+ $('#reflect').addEventListener('input',e=>{a.reflect=e.target.value;});
+ $('#btnNext').addEventListener('click',()=>{sfx.click();if(lvEnd)levelClear(q.level);else loadQuestion(state.qi+1);});
+ upd();
+}
+function levelClear(level){
+ const qs=state.qs.filter(q=>q.level===level);
+ let auto=0,mx=0,ok=0,xp=0;
+ qs.forEach(q=>{const a=state.answers[q.id];mx+=autoMaxOf(q);if(a){auto+=a.auto;xp+=a.auto+rubTotal(a);if(a.okA&&a.okB&&a.okE!==false)ok++;}});
+ const pct=auto/mx,stars=pct>=.85?3:pct>=.6?2:1;
+ state.stars[level]=stars;
+ const L=LEVELS[level-1],next=level<4;
+ $('#clearCard').innerHTML=`
+  <div style="font-size:3rem">🔓</div>
+  <h2 class="neon" tabindex="-1">ผ่านด่าน ${level}: ${esc(L.n)}</h2>
+  <div class="stars" aria-label="${stars} ดาว">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+  <div class="kv"><div><b>${ok}/${qs.length}</b>ภารกิจที่ถูกครบ</div><div><b>${Math.round(pct*100)}%</b>ความแม่นยำ (ระบบ)</div><div><b>${xp}</b>XP ในด่านนี้</div></div>
+  <p class="mut">${next?`ปลดล็อกด่านถัดไป: <b>${esc(LEVELS[level].n)}</b> — ${esc(LEVELS[level].s)}`:'ปลดล็อกภารกิจสุดท้ายสำเร็จ! พร้อมดูรายงานสรุปผล'}</p>
+  <button class="btn primary big" id="btnClearNext">${next?'ไปด่านถัดไป ▶':'🏁 ดูสรุปผล'}</button>`;
+ show('clear');updateHud();burst(true);sfx.unlock();
+ $('#btnClearNext').addEventListener('click',()=>{sfx.click();if(next)showIntro(level+1);else endGame('done');});
+}
+
+/* ===================== summary ===================== */
+function rankOf(p){return p>=90?'🏆 ATOM MASTER':p>=75?'🥇 SENIOR HUNTER':p>=55?'🥈 JUNIOR HUNTER':'🥉 ROOKIE SCANNER';}
+function ansText(q,a){return `${KIND_L[a.kind]} / ${PART_L[a.particle].replace(' (ไม่ใช่โมเลกุล)','')}`;}
+function endGame(reason){
+ if(state.ended)return;
+ state.ended=true;state.running=false;clearInterval(state.timer);
+ $('#pauseOv').hidden=true;
+ const t=totals(),qs=state.qs;
+ const answered=qs.filter(q=>state.answers[q.id]);
+ const pctAuto=Math.round(t.auto/t.autoMax*100);
+ const cA=answered.filter(q=>state.answers[q.id].okA).length,cB=answered.filter(q=>state.answers[q.id].okB).length;
+ const full=answered.filter(q=>{const a=state.answers[q.id];return a.okA&&a.okB&&a.okE!==false;}).length;
+ const used=DURATION-state.remaining;
+ const rubAssessed=answered.filter(q=>rubTotal(state.answers[q.id])>0).length;
+ // leaderboard
+ if(!state.saved&&answered.length){
+  state.saved=true;const b=loadBoard();
+  b.push({n:state.name,m:state.mode,s:t.total,p:pctAuto,d:new Date().toLocaleDateString('th-TH')});saveBoard(b);
+ }
+ // suggestions
+ const tagCount={};answered.forEach(q=>state.answers[q.id].tags.forEach(x=>tagCount[x]=(tagCount[x]||0)+1));
+ const sug=[];
+ Object.keys(tagCount).sort((x,y)=>tagCount[y]-tagCount[x]).forEach(k=>sug.push(`${MISC[k]} <small>(พบ ${tagCount[k]} ครั้ง)</small>`));
+ if(answered.length&&cA/answered.length<.7)sug.push('ทบทวนมิติ “ชนิดของสาร”: นับ “ชนิดของธาตุ” ในสูตรหรือภาพ — 1 ชนิด = ธาตุ, ตั้งแต่ 2 ชนิด = สารประกอบ');
+ if(answered.length&&cB/answered.length<.7)sug.push('ทบทวนมิติ “ลักษณะอนุภาค”: นับจำนวนอะตอมที่ยึดกันใน 1 อนุภาค — 1 อะตอมเดี่ยว = อะตอม, ตั้งแต่ 2 อะตอมยึดกัน = โมเลกุล');
+ if(rubAssessed===0)sug.push('ยังไม่มีการประเมินรูบริค — ครูหรือเพื่อนร่วมทีมสามารถทบทวนเหตุผลในรายงานด้านล่างและให้ข้อเสนอแนะรายภารกิจ');
+ else sug.push('ฝึกเขียนเหตุผลตามโครงสร้าง ข้อสรุป – หลักฐาน – หลักการ และอ้างข้อมูลเฉพาะจากภาพ สูตร หรือสมบัติ');
+ if(!Object.keys(tagCount).length&&answered.length===qs.length)sug.unshift('ยอดเยี่ยม! ท้าทายต่อ: หาสารรอบตัวอย่างน้อย 5 ชนิด แล้วจำแนกทั้ง 2 มิติพร้อมวาดแบบจำลองอนุภาค (เช่น ก๊าซหุงต้ม น้ำตาล เกลือแกง)');
+ const rows=LEVELS.map((l,i)=>{const n=i+1,s=state.stars[n];return `<tr><td>${l.ic} ${n}. ${esc(l.n)}</td><td>${s?'⭐'.repeat(s):'—'}</td></tr>`;}).join('');
+ const items=qs.map((q,i)=>{
+  const a=state.answers[q.id];
+  if(!a)return `<div class="ri na"><b>${i+1}. ${fHTML(esc(q.f))}</b> — ⏳ ยังไม่ได้ตอบ</div>`;
+  const ok=a.okA&&a.okB&&a.okE!==false;
+  return `<div class="ri"><b>${i+1}. ${fHTML(esc(q.f))} (${esc(q.th)})</b> ${ok?'<span class="ok">✔ ถูกครบ</span>':'<span class="no">✘ มีจุดผิด</span>'} · ${a.auto+rubTotal(a)}/${maxOf(q)} XP
+   <br><small>คำตอบ: ${esc(ansText(q,a))}${q.extra?' · คำถามย่อย: '+(a.okE?'ถูก':'ผิด'):''} · คำใบ้ ${a.hintsUsed} ครั้ง · ใช้เวลา ${a.sec} วิ</small>
+   ${ok?'':`<br><small>เฉลย: ${esc(KIND_L[q.kind])} / ${esc(PART_L[q.particle].replace(' (ไม่ใช่โมเลกุล)',''))}</small>`}
+   <br><small>เหตุผล: ${esc(a.reason)}</small>
+   <br><small>รูบริค: เหตุผล ${a.rubric.reason}/20${rubCrit(q).includes('formula')?' · สูตร '+a.rubric.formula+'/10':''} · โต้แย้ง ${a.rubric.debate}/20</small>
+   ${a.reflect?`<br><small>ปรับความเข้าใจ: ${esc(a.reflect)}</small>`:''}</div>`;
+ }).join('');
+ $('#sumBox').innerHTML=`
+  <div class="card center">
+   <div class="noprint" style="font-size:3rem">${reason==='time'?'⏰':'🎉'}</div>
+   <h1 class="neon" tabindex="-1">${reason==='time'?'หมดเวลา! สรุปผลภารกิจ':'ภารกิจสำเร็จ! สรุปผล'}</h1>
+   <p>${state.mode==='team'?'ทีม':'ผู้เล่น'}: <b>${esc(state.name)}</b>${state.mode==='team'?' ('+state.members.map(esc).join(', ')+')':''}</p>
+   <div class="big-score">${t.total} XP</div>
+   <p class="mut">คะแนนระบบ ${t.auto}/${t.autoMax} · คะแนนรูบริค ${t.rub}/${t.max-t.autoMax}</p>
+   <h2>${rankOf(pctAuto)} <small>(จากความแม่นยำของคะแนนระบบ ${pctAuto}%)</small></h2>
+   <div class="kv">
+    <div><b>${answered.length}/${qs.length}</b>ภารกิจที่ตอบ</div>
+    <div><b>${full}</b>ถูกครบทุกส่วน</div>
+    <div><b>${cA}/${answered.length}</b>ถูกมิติชนิดสาร</div>
+    <div><b>${cB}/${answered.length}</b>ถูกมิติอนุภาค</div>
+    <div><b>${fmt(used)}</b>เวลาที่ใช้</div>
+   </div>
+   <div class="row noprint" style="justify-content:center">
+    <button class="btn primary big" id="btnAgain">🔄 เริ่มเกมใหม่</button>
+    <button class="btn" id="btnPrint">🖨 พิมพ์รายงาน</button>
+    <button class="btn" id="btnDl">⬇ ดาวน์โหลดรายงาน (.txt)</button>
+   </div>
+  </div>
+  <div class="grid2">
+   <div class="card"><h2>🗺 ผลรายด่าน</h2><table><tr><th>ด่าน</th><th>ดาว</th></tr>${rows}</table></div>
+   <div class="card"><h2>🛠 ข้อเสนอแนะพัฒนาความเข้าใจ</h2><ul class="tight">${sug.map(s=>`<li>${s}</li>`).join('')}</ul></div>
+  </div>
+  <div class="card"><h2>📋 รายงานรายภารกิจ</h2>${items}</div>
+  <div class="card noprint"><h2>🏆 กระดานคะแนน (เครื่องนี้)</h2>${boardHTML()}</div>`;
+ show('summary');
+ $('#btnAgain').addEventListener('click',resetToStart);
+ $('#btnPrint').addEventListener('click',()=>window.print());
+ $('#btnDl').addEventListener('click',()=>downloadReport(t,pctAuto,used));
+ if(reason==='time')sfx.bad();else sfx.unlock();
+ burst(reason!=='time');
+}
+function downloadReport(t,pct,used){
+ const L=[];
+ L.push('ATOM HUNTERS: ภารกิจพิชิตรหัสสาร — รายงานผล');
+ L.push((state.mode==='team'?'ทีม: ':'ผู้เล่น: ')+state.name+(state.mode==='team'?' ('+state.members.join(', ')+')':''));
+ L.push(`คะแนนรวม ${t.total} XP (ระบบ ${t.auto}/${t.autoMax}, รูบริค ${t.rub}/${t.max-t.autoMax}) · ความแม่นยำ ${pct}% · เวลา ${fmt(used)}`);
+ L.push('');
+ state.qs.forEach((q,i)=>{
+  const a=state.answers[q.id];
+  if(!a){L.push(`${i+1}. ${q.plain} — ยังไม่ได้ตอบ`);return;}
+  L.push(`${i+1}. ${q.plain} (${q.th}) — คำตอบ: ${ansText(q,a)} | เฉลย: ${KIND_L[q.kind]} / ${PART_L[q.particle].replace(' (ไม่ใช่โมเลกุล)','')} | ${a.auto+rubTotal(a)}/${maxOf(q)} XP | คำใบ้ ${a.hintsUsed}`);
+  L.push(`   เหตุผล: ${a.reason.replace(/\n/g,' ')}`);
+  L.push(`   รูบริค: เหตุผล ${a.rubric.reason}, สูตร ${a.rubric.formula}, โต้แย้ง ${a.rubric.debate}`);
+  if(a.reflect)L.push(`   ปรับความเข้าใจ: ${a.reflect.replace(/\n/g,' ')}`);
+ });
+ const blob=new Blob(['\ufeff'+L.join('\r\n')],{type:'text/plain;charset=utf-8'});
+ const url=URL.createObjectURL(blob),el=document.createElement('a');
+ el.href=url;el.download='atom_hunters_report.txt';document.body.appendChild(el);el.click();el.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function resetToStart(){
+ clearInterval(state.timer);const snd=state.sound;state=newState();state.sound=snd;
+ $('#pauseOv').hidden=true;$('#boardStart').innerHTML=boardHTML();$('#startMsg').textContent='';
+ show('start');updateHud();
+}
+
+/* ===================== wiring ===================== */
+$$('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{
+ $$('input[name=mode]').forEach(x=>x.closest('.opt').classList.toggle('sel',x.checked));
+ const team=$('input[name=mode]:checked').value==='team';
+ $('#teamBox').hidden=!team;$('#soloBox').hidden=team;
+}));
+$('#btnStart').addEventListener('click',startGame);
+$('#btnBegin').addEventListener('click',()=>{sfx.click();const first=state.qs.findIndex(q=>q.level===state.level);loadQuestion(first);});
+$('#btnPause').addEventListener('click',()=>setPause(true));
+$('#btnResume').addEventListener('click',()=>setPause(false));
+$('#btnHome').addEventListener('click',()=>{if(confirm('ต้องการเริ่มเกมใหม่หรือไม่? ความคืบหน้าปัจจุบันจะหายไป'))resetToStart();});
+$('#btnSound').addEventListener('click',()=>{
+ state.sound=!state.sound;const b=$('#btnSound');b.textContent=state.sound?'🔊':'🔇';b.setAttribute('aria-pressed',state.sound);
+ if(state.sound)sfx.click();
+});
+$('#btnClearBoard').addEventListener('click',()=>{if(confirm('ล้างกระดานคะแนนทั้งหมดในเครื่องนี้?')){saveBoard([]);$('#boardStart').innerHTML=boardHTML();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
+$('#boardStart').innerHTML=boardHTML();
+updateHud();
+</script>
+</body>
+</html>
