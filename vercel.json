@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/atom_hunters_game.html" }
+  ]
+}
